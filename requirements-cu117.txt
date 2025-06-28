@@ -1,0 +1,35 @@
+pandas
+scikit-learn
+numpy
+jieba
+uvicorn
+gunicorn
+starlette
+fastapi
+httpx
+rank_bm25
+bm25s[core]==0.2.0
+rerankers==0.5.3
+rouge-chinese
+faiss-gpu
+huggingface_hub
+jionlp
+loguru
+flashtext
+kafka-python 
+python-snappy
+sqlalchemy
+zhon
+pymysql
+apscheduler
+pytz
+tzdata
+streamlit
+gradio>=5.0.0
+
+# 如果使用 cu117 环境，请安装以下依赖：
+sentence-transformers==2.5.1 --index-url https://pypi.tuna.tsinghua.edu.cn/simple
+torch==2.0.1
+
+# #按需 卸载（pass!）
+#pip uninstall transformer-engine # 否则cu121环境下transformers会报错!

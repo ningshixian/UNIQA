@@ -1,0 +1,21 @@
+# document_store.py模块，用于在内存中存储、检索和管理文档，并支持 BM25 和向量嵌入两种检索方式。
+# 它提供了同步与异步的文档写入、删除、过滤及搜索接口，适用于构建临时性的文档检索系统。
+
+# milvus_document_store 模块，用于对接 Milvus 向量数据库，支持高效地存储、检索和管理包含向量嵌入的文档。
+# 它提供了基于密集向量（Dense Vector）、稀疏向量（Sparse Vector）以及混合模式的相似性搜索功能，并支持通过过滤条件进行精准查询。
+
+import sys
+from typing import TYPE_CHECKING
+
+from lazy_imports import LazyImporter
+
+_import_structure = {
+    "document_store": ["InMemoryDocumentStore"], 
+    "milvus_document_store": ["MilvusDocumentStore"], 
+}
+
+if TYPE_CHECKING:
+    from .document_store import InMemoryDocumentStore as InMemoryDocumentStore
+    from .milvus_document_store import MilvusDocumentStore as MilvusDocumentStore
+else:
+    sys.modules[__name__] = LazyImporter(name=__name__, module_file=__file__, import_structure=_import_structure)

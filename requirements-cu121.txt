@@ -1,0 +1,44 @@
+lazy_imports
+pandas
+scikit-learn
+numpy
+jieba
+uvicorn
+gunicorn
+starlette
+fastapi
+httpx
+rank_bm25
+bm25s[core]==0.2.0
+rerankers==0.5.3
+rouge-chinese
+faiss-gpu
+huggingface_hub
+jionlp
+loguru
+flashtext
+kafka-python 
+python-snappy
+sqlalchemy
+zhon
+pymysql
+apscheduler
+pytz
+tzdata
+streamlit
+gradio>=5.0.0
+
+# 如果使用 cu121 环境，请安装以下依赖：
+sentence-transformers==3.0.1
+accelerate
+
+# PyTorch for CUDA 12.1 (可选，根据需要取消注释)
+torch==2.2.2 --index-url https://download.pytorch.org/whl/cu121
+torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu121
+torchaudio==2.2.2 --index-url https://download.pytorch.org/whl/cu121
+
+# Flash Attention (可选，根据需要取消注释)
+flash-attn==2.7.4.post1
+
+# #按需 卸载（pass!）
+#pip uninstall transformer-engine # 否则cu121环境下transformers会报错!
