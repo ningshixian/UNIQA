@@ -3,8 +3,7 @@
 
 from typing import Any, Dict, List, Optional
 
-from uniqa import Document
-# from uniqa import Document, component, default_from_dict, default_to_dict
+from uniqa import Document, default_from_dict, default_to_dict
 from uniqa.document_stores.types import DocumentStore, DuplicatePolicy
 # from uniqa.utils import deserialize_document_store_in_init_params_inplace
 
@@ -50,34 +49,34 @@ class DocumentWriter:
         """
         return {"document_store": type(self.document_store).__name__}
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Serializes the component to a dictionary.
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the component to a dictionary.
 
-    #     :returns:
-    #         Dictionary with serialized data.
-    #     """
-    #     return default_to_dict(self, document_store=self.document_store.to_dict(), policy=self.policy.name)
+        :returns:
+            Dictionary with serialized data.
+        """
+        return default_to_dict(self, document_store=self.document_store.to_dict(), policy=self.policy.name)
 
-    # @classmethod
-    # def from_dict(cls, data: Dict[str, Any]) -> "DocumentWriter":
-    #     """
-    #     Deserializes the component from a dictionary.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DocumentWriter":
+        """
+        Deserializes the component from a dictionary.
 
-    #     :param data:
-    #         The dictionary to deserialize from.
-    #     :returns:
-    #         The deserialized component.
+        :param data:
+            The dictionary to deserialize from.
+        :returns:
+            The deserialized component.
 
-    #     :raises DeserializationError:
-    #         If the document store is not properly specified in the serialization data or its type cannot be imported.
-    #     """
-    #     # deserialize the document store
-    #     deserialize_document_store_in_init_params_inplace(data)
+        :raises DeserializationError:
+            If the document store is not properly specified in the serialization data or its type cannot be imported.
+        """
+        # deserialize the document store
+        deserialize_document_store_in_init_params_inplace(data)
 
-    #     data["init_parameters"]["policy"] = DuplicatePolicy[data["init_parameters"]["policy"]]
+        data["init_parameters"]["policy"] = DuplicatePolicy[data["init_parameters"]["policy"]]
 
-    #     return default_from_dict(cls, data)
+        return default_from_dict(cls, data)
 
     # @component.output_types(documents_written=int)
     def run(self, documents: List[Document], policy: Optional[DuplicatePolicy] = None):

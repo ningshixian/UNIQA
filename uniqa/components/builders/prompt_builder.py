@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Literal, Optional, Set, Union
 from jinja2 import meta
 from jinja2.sandbox import SandboxedEnvironment
 
-from uniqa import logging
+from uniqa import default_to_dict, logging
 # from uniqa.utils import Jinja2TimeExtension
 
 logger = logging.logDog
@@ -199,16 +199,16 @@ class PromptBuilder:
         #     else:
         #         component.set_input_type(self, var, Any, "")
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Returns a dictionary representation of the component.
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Returns a dictionary representation of the component.
 
-    #     :returns:
-    #         Serialized dictionary representation of the component.
-    #     """
-    #     return default_to_dict(
-    #         self, template=self._template_string, variables=self._variables, required_variables=self._required_variables
-    #     )
+        :returns:
+            Serialized dictionary representation of the component.
+        """
+        return default_to_dict(
+            self, template=self._template_string, variables=self._variables, required_variables=self._required_variables
+        )
 
     # @component.output_types(prompt=str)
     def run(self, template: Optional[str] = None, template_variables: Optional[Dict[str, Any]] = None, **kwargs):

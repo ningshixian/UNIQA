@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Literal, Optional, Set, Union
 from jinja2 import meta
 from jinja2.sandbox import SandboxedEnvironment
 
-from uniqa import logging
+from uniqa import default_from_dict, default_to_dict, logging
 from uniqa.dataclasses.chat_message import ChatMessage, ChatRole, TextContent
 # from uniqa.utils import Jinja2TimeExtension
 
@@ -246,36 +246,36 @@ class ChatPromptBuilder:
                 f"Required variables: {required_variables}. Provided variables: {provided_variables}."
             )
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Returns a dictionary representation of the component.
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Returns a dictionary representation of the component.
 
-    #     :returns:
-    #         Serialized dictionary representation of the component.
-    #     """
-    #     if self.template is not None:
-    #         template = [m.to_dict() for m in self.template]
-    #     else:
-    #         template = None
+        :returns:
+            Serialized dictionary representation of the component.
+        """
+        if self.template is not None:
+            template = [m.to_dict() for m in self.template]
+        else:
+            template = None
 
-    #     return default_to_dict(
-    #         self, template=template, variables=self._variables, required_variables=self._required_variables
-    #     )
+        return default_to_dict(
+            self, template=template, variables=self._variables, required_variables=self._required_variables
+        )
 
-    # @classmethod
-    # def from_dict(cls, data: Dict[str, Any]) -> "ChatPromptBuilder":
-    #     """
-    #     Deserialize this component from a dictionary.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ChatPromptBuilder":
+        """
+        Deserialize this component from a dictionary.
 
-    #     :param data:
-    #         The dictionary to deserialize and create the component.
+        :param data:
+            The dictionary to deserialize and create the component.
 
-    #     :returns:
-    #         The deserialized component.
-    #     """
-    #     init_parameters = data["init_parameters"]
-    #     template = init_parameters.get("template")
-    #     if template:
-    #         init_parameters["template"] = [ChatMessage.from_dict(d) for d in template]
+        :returns:
+            The deserialized component.
+        """
+        init_parameters = data["init_parameters"]
+        template = init_parameters.get("template")
+        if template:
+            init_parameters["template"] = [ChatMessage.from_dict(d) for d in template]
 
-    #     return default_from_dict(cls, data)
+        return default_from_dict(cls, data)

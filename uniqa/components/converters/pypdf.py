@@ -8,7 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from uniqa import Document, logging
+from uniqa import Document, default_from_dict, default_to_dict, logging
 # from uniqa import Document, component, default_from_dict, default_to_dict, logging
 from uniqa.components.converters.utils import get_bytestream_from_source, normalize_metadata
 from uniqa.dataclasses import ByteStream
@@ -124,37 +124,37 @@ class PyPDFToDocument:
         self.layout_mode_strip_rotated = layout_mode_strip_rotated
         self.layout_mode_font_height_weight = layout_mode_font_height_weight
 
-    # def to_dict(self):
-    #     """
-    #     Serializes the component to a dictionary.
+    def to_dict(self):
+        """
+        Serializes the component to a dictionary.
 
-    #     :returns:
-    #         Dictionary with serialized data.
-    #     """
-    #     return default_to_dict(
-    #         self,
-    #         extraction_mode=str(self.extraction_mode),
-    #         plain_mode_orientations=self.plain_mode_orientations,
-    #         plain_mode_space_width=self.plain_mode_space_width,
-    #         layout_mode_space_vertically=self.layout_mode_space_vertically,
-    #         layout_mode_scale_weight=self.layout_mode_scale_weight,
-    #         layout_mode_strip_rotated=self.layout_mode_strip_rotated,
-    #         layout_mode_font_height_weight=self.layout_mode_font_height_weight,
-    #         store_full_path=self.store_full_path,
-    #     )
+        :returns:
+            Dictionary with serialized data.
+        """
+        return default_to_dict(
+            self,
+            extraction_mode=str(self.extraction_mode),
+            plain_mode_orientations=self.plain_mode_orientations,
+            plain_mode_space_width=self.plain_mode_space_width,
+            layout_mode_space_vertically=self.layout_mode_space_vertically,
+            layout_mode_scale_weight=self.layout_mode_scale_weight,
+            layout_mode_strip_rotated=self.layout_mode_strip_rotated,
+            layout_mode_font_height_weight=self.layout_mode_font_height_weight,
+            store_full_path=self.store_full_path,
+        )
 
-    # @classmethod
-    # def from_dict(cls, data):
-    #     """
-    #     Deserializes the component from a dictionary.
+    @classmethod
+    def from_dict(cls, data):
+        """
+        Deserializes the component from a dictionary.
 
-    #     :param data:
-    #         Dictionary with serialized data.
+        :param data:
+            Dictionary with serialized data.
 
-    #     :returns:
-    #         Deserialized component.
-    #     """
-    #     return default_from_dict(cls, data)
+        :returns:
+            Deserialized component.
+        """
+        return default_from_dict(cls, data)
 
     def _default_convert(self, reader: "PdfReader") -> str:
         texts = []

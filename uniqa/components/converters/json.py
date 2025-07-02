@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Set, Tuple, Union
 
-from uniqa import logging
+from uniqa import default_from_dict, default_to_dict, logging
 # from uniqa import component, default_from_dict, default_to_dict, logging
 from uniqa.components.converters.utils import get_bytestream_from_source, normalize_metadata
 from uniqa.dataclasses import ByteStream, Document
@@ -150,32 +150,32 @@ class JSONConverter:
             msg = "No `jq_schema` nor `content_key` specified. Set either or both to extract data."
             raise ValueError(msg)
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Serializes the component to a dictionary.
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the component to a dictionary.
 
-    #     :returns:
-    #         Dictionary with serialized data.
-    #     """
-    #     return default_to_dict(
-    #         self,
-    #         jq_schema=self._jq_schema,
-    #         content_key=self._content_key,
-    #         extra_meta_fields=self._meta_fields,
-    #         store_full_path=self._store_full_path,
-    #     )
+        :returns:
+            Dictionary with serialized data.
+        """
+        return default_to_dict(
+            self,
+            jq_schema=self._jq_schema,
+            content_key=self._content_key,
+            extra_meta_fields=self._meta_fields,
+            store_full_path=self._store_full_path,
+        )
 
-    # @classmethod
-    # def from_dict(cls, data: Dict[str, Any]) -> "JSONConverter":
-    #     """
-    #     Deserializes the component from a dictionary.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "JSONConverter":
+        """
+        Deserializes the component from a dictionary.
 
-    #     :param data:
-    #         Dictionary to deserialize from.
-    #     :returns:
-    #         Deserialized component.
-    #     """
-    #     return default_from_dict(cls, data)
+        :param data:
+            Dictionary to deserialize from.
+        :returns:
+            Deserialized component.
+        """
+        return default_from_dict(cls, data)
 
     def _get_content_and_meta(self, source: ByteStream) -> List[Tuple[str, Dict[str, Any]]]:
         """

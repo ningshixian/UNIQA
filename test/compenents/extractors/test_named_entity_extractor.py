@@ -2,18 +2,52 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# Note: We do not test the Spacy backend in this module.
+# Spacy is not installed in the test environment to keep the CI fast.
+# We test the Spacy backend in e2e/pipelines/test_named_entity_extractor.py.
+
 import os
-import pytest
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.getcwd())
+sys.path.append(os.path.abspath('.'))
+
+import pytest
 
 from uniqa import Document
 from uniqa.components.extractors import NamedEntityAnnotation, NamedEntityExtractor, NamedEntityExtractorBackend
-
+from uniqa.utils.device import ComponentDevice
 
 """
 pytest -svx test/test_named_entity_extractor.py::test_ner_extractor_init
 pytest -svx test/test_named_entity_extractor.py::test_ner_extractor_spacy_backend
+"""
+
+
+documents = [
+    Document(content="理想L9这款车是由中国的理想汽车在 2021年 生产的"),
+    Document(content="台湾是一个位于亚洲东部的岛屿国家。"),
+]
+
+extractor = NamedEntityExtractor(
+    backend=NamedEntityExtractorBackend.SPACY, 
+    model="zh_core_web_trf", 
+    device=ComponentDevice.from_str("mps"),
+)
+extractor.warm_up()
+results = extractor.run(documents=documents)["documents"]
+annotations = [NamedEntityExtractor.get_stored_annotations(doc) for doc in results]  # doc["named_entities"]
+print(annotations)
+
+"""
+[
+    [NamedEntityAnnotation(entity='PRODUCT', start=0, end=4, score=None), 
+    NamedEntityAnnotation(entity='GPE', start=9, end=11, score=None), 
+    NamedEntityAnnotation(entity='ORG', start=12, end=18, score=None), 
+    NamedEntityAnnotation(entity='DATE', start=20, end=25, score=None)], 
+    
+    [NamedEntityAnnotation(entity='GPE', start=0, end=2, score=None), 
+    NamedEntityAnnotation(entity='LOC', start=7, end=9, score=None)]
+]
 """
 
 

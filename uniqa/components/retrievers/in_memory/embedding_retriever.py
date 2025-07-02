@@ -4,8 +4,7 @@
 
 from typing import Any, Dict, List, Optional
 
-from uniqa import Document
-# from haystack import DeserializationError, Document, component, default_from_dict, default_to_dict
+from uniqa import DeserializationError, Document, default_from_dict, default_to_dict
 from uniqa.document_stores import InMemoryDocumentStore
 # from uniqa.document_stores.types import FilterPolicy
 
@@ -110,7 +109,16 @@ class InMemoryEmbeddingRetriever:
         :returns:
             Dictionary with serialized data.
         """
-        pass
+        docstore = self.document_store.to_dict()
+        return default_to_dict(
+            self,
+            document_store=docstore,
+            filters=self.filters,
+            top_k=self.top_k,
+            scale_score=self.scale_score,
+            return_embedding=self.return_embedding,
+            filter_policy=self.filter_policy.value,
+        )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "InMemoryEmbeddingRetriever":
@@ -122,7 +130,17 @@ class InMemoryEmbeddingRetriever:
         :returns:
             The deserialized component.
         """
-        pass
+        init_params = data.get("init_parameters", {})
+        if "document_store" not in init_params:
+            raise DeserializationError("Missing 'document_store' in serialization data")
+        if "type" not in init_params["document_store"]:
+            raise DeserializationError("Missing 'type' in document store's serialization data")
+        if "filter_policy" in init_params:
+            init_params["filter_policy"] = FilterPolicy.from_str(init_params["filter_policy"])
+        data["init_parameters"]["document_store"] = InMemoryDocumentStore.from_dict(
+            data["init_parameters"]["document_store"]
+        )
+        return default_from_dict(cls, data)
 
     # @component.output_types(documents=List[Document])
     def run(  # pylint: disable=too-many-positional-arguments

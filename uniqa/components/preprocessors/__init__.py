@@ -13,6 +13,7 @@ _import_structure = {
     # "document_splitter": ["DocumentSplitter"],
     "recursive_splitter": ["RecursiveDocumentSplitter"],
     "text_cleaner": ["TextCleaner"],
+    "document_splitter_zh": ["ChineseDocumentSpliter"],
 }
 
 if TYPE_CHECKING:
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
     # from .document_splitter import DocumentSplitter as DocumentSplitter
     from .recursive_splitter import RecursiveDocumentSplitter as RecursiveDocumentSplitter
     from .text_cleaner import TextCleaner as TextCleaner
+    from .document_splitter_zh import ChineseDocumentSpliter as ChineseDocumentSpliter
 
 else:
     sys.modules[__name__] = LazyImporter(name=__name__, module_file=__file__, import_structure=_import_structure)

@@ -8,12 +8,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from uniqa import ComponentError, DeserializationError, Document
-# from uniqa import ComponentError, DeserializationError, Document, component, default_from_dict, default_to_dict
+from uniqa import ComponentError, DeserializationError, Document, default_from_dict, default_to_dict
 from uniqa.lazy_imports import LazyImport
 # from uniqa.utils.auth import Secret, deserialize_secrets_inplace
 from uniqa.utils.device import ComponentDevice
-# from uniqa.utils.hf import deserialize_hf_model_kwargs, resolve_hf_pipeline_kwargs, serialize_hf_model_kwargs
+from uniqa.utils.hf import deserialize_hf_model_kwargs, resolve_hf_pipeline_kwargs, serialize_hf_model_kwargs
 
 with LazyImport(message="Run 'pip install \"transformers[torch]\"'") as transformers_import:
     from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
@@ -209,50 +208,50 @@ class NamedEntityExtractor:
 
         return {"documents": documents}
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Serializes the component to a dictionary.
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the component to a dictionary.
 
-    #     :returns:
-    #         Dictionary with serialized data.
-    #     """
-    #     serialization_dict = default_to_dict(
-    #         self,
-    #         backend=self._backend.type.name,
-    #         model=self._backend.model_name,
-    #         device=self._backend.device.to_dict(),
-    #         pipeline_kwargs=self._backend._pipeline_kwargs,
-    #         token=self.token.to_dict() if self.token else None,
-    #     )
+        :returns:
+            Dictionary with serialized data.
+        """
+        serialization_dict = default_to_dict(
+            self,
+            backend=self._backend.type.name,
+            model=self._backend.model_name,
+            device=self._backend.device.to_dict(),
+            pipeline_kwargs=self._backend._pipeline_kwargs,
+            token=self.token.to_dict() if self.token else None,
+        )
 
-    #     hf_pipeline_kwargs = serialization_dict["init_parameters"]["pipeline_kwargs"]
-    #     hf_pipeline_kwargs.pop("token", None)
+        hf_pipeline_kwargs = serialization_dict["init_parameters"]["pipeline_kwargs"]
+        hf_pipeline_kwargs.pop("token", None)
 
-    #     serialize_hf_model_kwargs(hf_pipeline_kwargs)
-    #     return serialization_dict
+        serialize_hf_model_kwargs(hf_pipeline_kwargs)
+        return serialization_dict
 
-    # @classmethod
-    # def from_dict(cls, data: Dict[str, Any]) -> "NamedEntityExtractor":
-    #     """
-    #     Deserializes the component from a dictionary.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "NamedEntityExtractor":
+        """
+        Deserializes the component from a dictionary.
 
-    #     :param data:
-    #         Dictionary to deserialize from.
-    #     :returns:
-    #         Deserialized component.
-    #     """
-    #     try:
-    #         deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
-    #         init_params = data.get("init_parameters", {})
-    #         if init_params.get("device") is not None:
-    #             init_params["device"] = ComponentDevice.from_dict(init_params["device"])
-    #         init_params["backend"] = NamedEntityExtractorBackend[init_params["backend"]]
+        :param data:
+            Dictionary to deserialize from.
+        :returns:
+            Deserialized component.
+        """
+        try:
+            # deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
+            init_params = data.get("init_parameters", {})
+            if init_params.get("device") is not None:
+                init_params["device"] = ComponentDevice.from_dict(init_params["device"])
+            init_params["backend"] = NamedEntityExtractorBackend[init_params["backend"]]
 
-    #         hf_pipeline_kwargs = init_params.get("pipeline_kwargs", {})
-    #         deserialize_hf_model_kwargs(hf_pipeline_kwargs)
-    #         return default_from_dict(cls, data)
-    #     except Exception as e:
-    #         raise DeserializationError(f"Couldn't deserialize {cls.__name__} instance") from e
+            hf_pipeline_kwargs = init_params.get("pipeline_kwargs", {})
+            deserialize_hf_model_kwargs(hf_pipeline_kwargs)
+            return default_from_dict(cls, data)
+        except Exception as e:
+            raise DeserializationError(f"Couldn't deserialize {cls.__name__} instance") from e
 
     @property
     def initialized(self) -> bool:

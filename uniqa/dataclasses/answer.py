@@ -5,9 +5,9 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
+from uniqa.core.serialization import default_from_dict, default_to_dict
 from uniqa.dataclasses.document import Document
-# from haystack.core.serialization import default_from_dict, default_to_dict
-# from uniqa.dataclasses import ChatMessage, Document
+from uniqa.dataclasses.chat_message import ChatMessage
 
 
 @runtime_checkable
@@ -48,7 +48,20 @@ class ExtractedAnswer:
         :returns:
             Serialized dictionary representation of the object.
         """
-        pass
+        document = self.document.to_dict(flatten=False) if self.document is not None else None
+        document_offset = asdict(self.document_offset) if self.document_offset is not None else None
+        context_offset = asdict(self.context_offset) if self.context_offset is not None else None
+        return default_to_dict(
+            self,
+            data=self.data,
+            query=self.query,
+            document=document,
+            context=self.context,
+            score=self.score,
+            document_offset=document_offset,
+            context_offset=context_offset,
+            meta=self.meta,
+        )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ExtractedAnswer":
@@ -60,7 +73,16 @@ class ExtractedAnswer:
         :returns:
             Deserialized object.
         """
-        pass
+        init_params = data.get("init_parameters", {})
+        if (doc := init_params.get("document")) is not None:
+            data["init_parameters"]["document"] = Document.from_dict(doc)
+
+        if (offset := init_params.get("document_offset")) is not None:
+            data["init_parameters"]["document_offset"] = ExtractedAnswer.Span(**offset)
+
+        if (offset := init_params.get("context_offset")) is not None:
+            data["init_parameters"]["context_offset"] = ExtractedAnswer.Span(**offset)
+        return default_from_dict(cls, data)
 
 
 @dataclass
@@ -77,7 +99,17 @@ class GeneratedAnswer:
         :returns:
             Serialized dictionary representation of the object.
         """
-        pass
+        documents = [doc.to_dict(flatten=False) for doc in self.documents]
+
+        # Serialize ChatMessage objects to dicts
+        meta = self.meta
+        all_messages = meta.get("all_messages")
+
+        # all_messages is either a list of ChatMessage objects or a list of strings
+        if all_messages and isinstance(all_messages[0], ChatMessage):
+            meta = {**meta, "all_messages": [msg.to_dict() for msg in all_messages]}
+
+        return default_to_dict(self, data=self.data, query=self.query, documents=documents, meta=meta)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GeneratedAnswer":
@@ -90,4 +122,14 @@ class GeneratedAnswer:
         :returns:
             Deserialized object.
         """
-        pass
+        init_params = data.get("init_parameters", {})
+
+        if (documents := init_params.get("documents")) is not None:
+            init_params["documents"] = [Document.from_dict(d) for d in documents]
+
+        meta = init_params.get("meta", {})
+        if (all_messages := meta.get("all_messages")) is not None and isinstance(all_messages[0], dict):
+            meta["all_messages"] = [ChatMessage.from_dict(m) for m in all_messages]
+        init_params["meta"] = meta
+
+        return default_from_dict(cls, data)

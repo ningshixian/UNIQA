@@ -1,57 +1,70 @@
 # UniFAQ
-一种 FAQ 混合检索解决方案 UniFAQ，你也可以称之为 SEARCH-U
-- Semantic
-- Enhanced
-- Answer
-- Retrieval
-- CHatbot
-- Unified
+本项目参考自[haystack](https://github.com/deepset-ai/haystack)
+技术文档 https://www.yuque.com/ningshixian/xa7g6q/edtx6bhb1vrafup5?singleDoc#
+> 输入query文本 -> clean -> 召回（Recall） -> 粗序（Rank） -> 后处理（Rule） -> result
 
 各模块详细介绍
 
-📂 `hackathon_project/`  
-│── 📂 `data/` → 包含原始数据集和预处理数据集 
-│    ├── `database_piatti_con_id.csv`  
-│    ├── `dish_mapping.json`  
-│    ├── `domande.json`  
-│    ├── `submission.csv`  
-│    ├── 📂 `preprocessed/` → 已清理和优化的数据  
-│── 📂 `models/` → 
-│    ├── `embedding_model/` → embedding模型 (`bge-large`, `mpnet-base-v2`)  
-│    ├── `reranker_model/` → reranking模型 (`cross-encoder/ms-marco-MiniLM-L-12-v2`)  
-│    ├── `faiss_index/` → 预训练的 FAISS 索引文件
-│── 📂 `src/` → Contiene il codice della pipeline  
-│    ├── `preprocessing.py` → 数据清理与准备
-│    ├── `retrieval.py` → FAISS + BM25 + TF-IDF  
-│    ├── `reranking.py` → LLM排序 
-│    ├── `generate_submission.py` → Pipeline completa per la submission  
+📂 `uniqa/`  
+│── 📂 `api/` → 
+│    ├── `api.py` → 
+│    ├── `router.py` → 
+│── 📂 `configs/` → 
 │    ├── `config.py` → Configurazioni globali (modelli, top_k, path, etc.)  
-│── 📂 `notebooks/` → 包含用于分析和实验的 Jupyter Notebook
+│    ├── `gunicorn_config_api.py` → 
+│── 📂 `compoments/` → 各种具体的组件实现
+│    ├──📂 `builders/` → 负责构建各种提示和答案，帮助用户更方便地与大语言模型（LLM）进行交互
+│    │    ├── `answer_builder.py` → 其功能是根据模型的输出和相关上下文，通过正则匹配出答案。
+│    │    ├── `chat_prompt_builder.py` → 其功能是用于构建聊天场景下的提示信息。
+│    │    ├── `prompt_builder.py` → 其功能是用于构建通用的提示信息。
+│    ├──📂 `web_search/` → 此模块提供了与网络搜索相关的组件
+│    ├──📂 `converters/` → 负责文档的解析，确保文档格式适合模型处理
+│    ├──📂 `embedders/` → 主要提供了使用 SentenceTransformers 模型进行嵌入的具体实现
+│    ├──📂 `extractors/` → 主要提供了 NER，并将标注结果存储在文档的元数据中
+│    ├──📂 `generators/` → 包括本地部署模型、OpenAI方式API调用
+│    ├──📂 `preprocessors/` → 负责文档的清洗、分割、转换为 Document 对象
+│    ├──📂 `rankers/` → 
+│    │    ├── `lost_in_the_middle.py` → 使得最相关的文档位于开头或结尾，最不相关的文档位于中间。
+│    │    ├── `sentence_transformers_similarity.py` → 使用预训练的cross-encoder模型排序
+│    │    ├── `transformers_similarity.py` → 同上
+│    ├──📂 `retrievers/` → 
+│    │    ├──📂 `indexs/` → 定义了FAISS/ANNOY/MILVUS 索引文件
+│    │    ├── `filter_retriever.py` → 根据指定的过滤器从文档存储中检索文档
+│    │    ├── `sentence_window_retriever.py` → 与现有的检索器（如 BM25 检索器或嵌入检索器）协同工作，获取候选的相邻文档
+│    │    ├── `EmbeddingRetriever.py` → 使用基于关键词的 BM25 算法从内存文档存储中检索与查询最相似的文档。
+│    │    ├── `BM25Retriever.py` → 使用嵌入模型计算文本相似度从内存文档存储中检索与查询最相似的文档。
+│    │    ├── `HybridRetriever.py` → 混合检索
+│    ├──📂 `writers/` → 将文档写入向量数据库（document_stores）
+│    ├──📂 `readers/` → ExtractiveQA。基于 Transformers 的抽取式问答模块，从文档中定位并提取与问题最匹配的文本片段
+│── 📂 `core/` → 
+│    ├──📂 `component/` → 定义了组件的基类和相关接口
+│    ├── `errors.py` → 自定义错误
+│    ├── `serialization.py` → 提供组件（Component）的序列化和反序列化功能
+│── 📂 `dataclass/` → 定义了框架中使用的数据类，用于表示各种数据结构。
+│    ├── `answer.py` → 答案模板，包括ExtractedAnswer、GeneratedAnswer
+│    ├── `chat_message.py` → 对话模板，包括ChatMessage
+│    ├── `document.py` → 定义了 Document 基本的数据类 ❗️
+│    ├── `sparse_embedding.py` → 用于表示文档的稀疏嵌入向量
+│    ├── `byte_stream.py` → 可用于处理文档中的二进制数据，像图片、音频等。
+│── 📂 `data/` → 包含原始数据集和预处理数据集 
+│── 📂 `document_stores/` → 负责存储和管理文档，为检索器提供数据支持
+│    ├──📂 `types/` → 为文档存储的实现提供了统一的接口和规范。
+│    ├── `document_store.py` → 实现了内存中的文档存储（写入、过滤、删除），提供 BM25 以及 向量余弦相似度检索
+│    ├── `milvus_document_store.py` → 实现了基于 milvus 向量库的文档存储
+│── 📂 `evaluation/` → 
+│── 📂 `tools/` → 将组件包装为可调用的工具
+│    ├── `vecs_whitening.py` → 一种处理向量空间坍缩的有效方法，非必须
+│    ├── `socket_detection.py` → 
+│── 📂 `utils/` → 通用工具
+│── 📂 `training/` → embedding 训练
 │── 📂 `logs/` → Contiene log per il debugging  
-│── 📂 `submission/` → Cartella con il file `submission.csv`  
-│── 📄 `requirements.txt` → Librerie necessarie  
-│── 📄 `README.md` → Documentazione del progetto  
-
-
-📦Tecnologie Utilizzate
- **FAISS** → Per la ricerca veloce basata su similarità semantica.  
- **BM25** → Per il retrieval basato su parole chiave.  
- **TF-IDF** → Per il miglioramento della ricerca tra documenti simili.  
- **Sentence Transformers** → Per generare embedding NLP avanzati.  
- **Cross-Encoder LLM** → Per il reranking basato su IA.  
- **Pandas, Scikit-learn, NumPy** → Per la gestione e analisi dei dati.  
-
-vecs_whitening，一种处理向量空间坍缩的有效方法，非必须，如果需要，可见本项目vecs_whitening.py代码，用法和sklearn的pca一致。可以将训练好的vecs_whitening模型地址输入bert_encoder中，也可以自己用本代码训练模型保存，再传入bert_encoder中。
+📂 `test/` → 测试目录，包含单元测试、集成测试等代码
+📂 `examples/` → 示例代码目录
+📂 `notebooks/` → 包含用于分析和实验的 Jupyter Notebook
+📄 `requirements.txt` → Librerie necessarie  
+📄 `README.md` → Documentazione del progetto  
 
 ---
-
-## 项目介绍
-> 输入query文本 -> clean -> 召回（Recall） -> 粗序（Rank） -> 后处理（Rule） -> result
-> 技术文档 https://li.feishu.cn/wiki/S6p5w3gQ3i98PxkcGKNcicykned?fromScene=spaceOverview
-
-- 问题理解，对用户 query 进行改写以及向量表示
-- 召回模块，在问题集上进行候选问题召回，获得 topk（基于关键字的倒排索引 vs 基于向量的语义召回）
-- 排序模块，对 topk 进行精排序
 
 ### 数据集
 
@@ -147,7 +160,7 @@ locust  -f locust_test.py  --host=http://127.0.0.1:8889/module --headless -u 100
 - 七鱼一触即达kafka消息监听: `nohup python -u consumer_qy.py > ../logs/consumer.log 2>&1 &` -->
 
 
-## 参考
+## 其他资料
 - https://github.com/iseesaw/FAQ-Semantic-Retrieval
 - https://github.com/RUC-NLPIR/FlashRAG
 

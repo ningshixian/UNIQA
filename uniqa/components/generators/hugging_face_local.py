@@ -14,7 +14,7 @@ from uniqa.utils import (
     # deserialize_secrets_inplace,
     # serialize_callable,
 )
-# from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
+from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
 
 logger = logging.logDog
 
@@ -167,48 +167,48 @@ class HuggingFaceLocalGenerator:
             )
             self.stopping_criteria_list = StoppingCriteriaList([stop_words_criteria])
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Serializes the component to a dictionary.
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the component to a dictionary.
 
-    #     :returns:
-    #         Dictionary with serialized data.
-    #     """
-    #     callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
-    #     serialization_dict = default_to_dict(
-    #         self,
-    #         huggingface_pipeline_kwargs=self.huggingface_pipeline_kwargs,
-    #         generation_kwargs=self.generation_kwargs,
-    #         streaming_callback=callback_name,
-    #         stop_words=self.stop_words,
-    #         token=self.token.to_dict() if self.token else None,
-    #     )
+        :returns:
+            Dictionary with serialized data.
+        """
+        # callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
+        serialization_dict = default_to_dict(
+            self,
+            huggingface_pipeline_kwargs=self.huggingface_pipeline_kwargs,
+            generation_kwargs=self.generation_kwargs,
+            # streaming_callback=callback_name,
+            stop_words=self.stop_words,
+            token=self.token.to_dict() if self.token else None,
+        )
 
-    #     huggingface_pipeline_kwargs = serialization_dict["init_parameters"]["huggingface_pipeline_kwargs"]
-    #     huggingface_pipeline_kwargs.pop("token", None)
+        huggingface_pipeline_kwargs = serialization_dict["init_parameters"]["huggingface_pipeline_kwargs"]
+        huggingface_pipeline_kwargs.pop("token", None)
 
-    #     serialize_hf_model_kwargs(huggingface_pipeline_kwargs)
-    #     return serialization_dict
+        serialize_hf_model_kwargs(huggingface_pipeline_kwargs)
+        return serialization_dict
 
-    # @classmethod
-    # def from_dict(cls, data: Dict[str, Any]) -> "HuggingFaceLocalGenerator":
-    #     """
-    #     Deserializes the component from a dictionary.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "HuggingFaceLocalGenerator":
+        """
+        Deserializes the component from a dictionary.
 
-    #     :param data:
-    #         The dictionary to deserialize from.
-    #     :returns:
-    #         The deserialized component.
-    #     """
-    #     deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
-    #     init_params = data.get("init_parameters", {})
-    #     serialized_callback_handler = init_params.get("streaming_callback")
-    #     if serialized_callback_handler:
-    #         data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
+        :param data:
+            The dictionary to deserialize from.
+        :returns:
+            The deserialized component.
+        """
+        # deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
+        init_params = data.get("init_parameters", {})
+        serialized_callback_handler = init_params.get("streaming_callback")
+        # if serialized_callback_handler:
+        #     data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
 
-    #     huggingface_pipeline_kwargs = init_params.get("huggingface_pipeline_kwargs", {})
-    #     deserialize_hf_model_kwargs(huggingface_pipeline_kwargs)
-    #     return default_from_dict(cls, data)
+        huggingface_pipeline_kwargs = init_params.get("huggingface_pipeline_kwargs", {})
+        deserialize_hf_model_kwargs(huggingface_pipeline_kwargs)
+        return default_from_dict(cls, data)
 
     # @component.output_types(replies=List[str])
     def run(

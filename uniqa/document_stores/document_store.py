@@ -11,9 +11,13 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy as np
+# import bm25s
+# from bm25s.tokenization import Tokenized
+import hanlp
+from tqdm.auto import tqdm
 
 from uniqa import logging
 from uniqa import default_from_dict, default_to_dict, logging
@@ -34,6 +38,8 @@ logger = logging.logDog
 # mapped to scores ~1.
 BM25_SCALING_FACTOR = 8
 DOT_PRODUCT_SCALING_FACTOR = 100
+
+chinese_tokenizer_coarse = hanlp.load(hanlp.pretrained.tok.COARSE_ELECTRA_SMALL_ZH)
 
 
 @dataclass
@@ -63,10 +69,10 @@ class InMemoryDocumentStore:
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        bm25_tokenization_regex: str = r"(?u)\b\w\w+\b",
-        bm25_algorithm: Literal["BM25Okapi", "BM25L", "BM25Plus"] = "BM25L",
+        # bm25_tokenization_regex: str = r"(?u)\b\w\w+\b",
+        bm25_algorithm: Literal["BM25Okapi", "BM25L", "BM25Plus"] = "BM25Plus",
         bm25_parameters: Optional[Dict] = None,
-        embedding_similarity_function: Literal["dot_product", "cosine"] = "dot_product",
+        embedding_similarity_function: Literal["dot_product", "cosine"] = "cosine",
         index: Optional[str] = None,
         async_executor: Optional[ThreadPoolExecutor] = None,
     ):
@@ -87,8 +93,9 @@ class InMemoryDocumentStore:
             Optional ThreadPoolExecutor to use for async calls. If not provided, a single-threaded
             executor will be initialized and used.
         """
-        self.bm25_tokenization_regex = bm25_tokenization_regex
-        self.tokenizer = re.compile(bm25_tokenization_regex).findall
+        # self.bm25_tokenization_regex = bm25_tokenization_regex
+        # self.tokenizer = re.compile(bm25_tokenization_regex).findall
+        self.tokenizer = chinese_tokenizer_coarse
 
         if index is None:
             index = str(uuid.uuid4())

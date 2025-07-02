@@ -6,12 +6,12 @@ from copy import copy
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from uniqa import Document
+from uniqa import Document, default_from_dict, default_to_dict
 # from uniqa import Document, component, default_from_dict, default_to_dict
 from uniqa.lazy_imports import LazyImport
 from uniqa.utils import ComponentDevice
 # from uniqa.utils import ComponentDevice, Secret, deserialize_secrets_inplace
-# from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
+from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
 
 with LazyImport(message="Run 'pip install \"sentence-transformers>=4.1.0\"'") as torch_and_sentence_transformers_import:
     from sentence_transformers import CrossEncoder
@@ -173,8 +173,8 @@ class SentenceTransformersSimilarityRanker:
             backend=self.backend,
             batch_size=self.batch_size,
         )
-        # if serialization_dict["init_parameters"].get("model_kwargs") is not None:
-        #     serialize_hf_model_kwargs(serialization_dict["init_parameters"]["model_kwargs"])
+        if serialization_dict["init_parameters"].get("model_kwargs") is not None:
+            serialize_hf_model_kwargs(serialization_dict["init_parameters"]["model_kwargs"])
         return serialization_dict
 
     @classmethod
@@ -187,7 +187,14 @@ class SentenceTransformersSimilarityRanker:
         :returns:
             Deserialized component.
         """
-        pass
+        init_params = data["init_parameters"]
+        if init_params.get("device") is not None:
+            init_params["device"] = ComponentDevice.from_dict(init_params["device"])
+        if init_params.get("model_kwargs") is not None:
+            deserialize_hf_model_kwargs(init_params["model_kwargs"])
+        # deserialize_secrets_inplace(init_params, keys=["token"])
+
+        return default_from_dict(cls, data)
 
     # @component.output_types(documents=List[Document])
     def run(

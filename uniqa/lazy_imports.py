@@ -1,6 +1,4 @@
-# SPDX-FileCopyrightText: 2022-present deepset GmbH <info@deepset.ai>
-#
-# SPDX-License-Identifier: Apache-2.0
+# 实现了延迟导入的功能，有助于提升模块的加载性能。
 
 from types import TracebackType
 from typing import Optional, Type

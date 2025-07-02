@@ -22,6 +22,7 @@ _import_structure = {
     # "tika": ["TikaDocumentConverter"],
     "txt": ["TextFileToDocument"],
     "xlsx": ["XLSXToDocument"],
+    # "docling_converter": ["DoclingConverter"],
 }
 
 if TYPE_CHECKING:
@@ -41,6 +42,7 @@ if TYPE_CHECKING:
     # from .tika import TikaDocumentConverter as TikaDocumentConverter
     from .txt import TextFileToDocument as TextFileToDocument
     from .xlsx import XLSXToDocument as XLSXToDocument
+    # from .docling_converter import DoclingConverter as DoclingConverter
 
 else:
     sys.modules[__name__] = LazyImporter(name=__name__, module_file=__file__, import_structure=_import_structure)

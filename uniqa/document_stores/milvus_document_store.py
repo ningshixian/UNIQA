@@ -3,8 +3,7 @@ import logging
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Union
 
-from uniqa import Document
-# from haystack import Document, default_from_dict, default_to_dict
+from uniqa import Document, default_from_dict, default_to_dict
 from uniqa.dataclasses.sparse_embedding import SparseEmbedding
 # from uniqa.core.errors import DocumentStoreError
 # from uniqa.core.errors import FilterError
@@ -523,7 +522,35 @@ class MilvusDocumentStore:
 
         :return: A dictionary representation of the document store.
         """
-        pass
+        new_connection_args = {}
+        for conn_arg_key, conn_arg_value in self.connection_args.items():  # type: ignore[union-attr]
+            # if isinstance(conn_arg_value, Secret):
+            #     new_connection_args[conn_arg_key] = conn_arg_value.to_dict()
+            # else:
+            #     new_connection_args[conn_arg_key] = conn_arg_value
+            new_connection_args[conn_arg_key] = conn_arg_value
+        init_parameters = {
+            "collection_name": self.collection_name,
+            "collection_description": self.collection_description,
+            "collection_properties": self.collection_properties,
+            "connection_args": new_connection_args,
+            "consistency_level": self.consistency_level,
+            "index_params": self.index_params,
+            "search_params": self.search_params,
+            "drop_old": self.drop_old,
+            "primary_field": self._primary_field,
+            "text_field": self._text_field,
+            "vector_field": self._vector_field,
+            "sparse_vector_field": self._sparse_vector_field,
+            "sparse_index_params": self.sparse_index_params,
+            "sparse_search_params": self.sparse_search_params,
+            "builtin_function": [func.to_dict() for func in self.builtin_function],
+            "partition_key_field": self._partition_key_field,
+            "partition_names": self.partition_names,
+            "replica_number": self.replica_number,
+            "timeout": self.timeout,
+        }
+        return default_to_dict(self, **init_parameters)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MilvusDocumentStore":
@@ -533,7 +560,29 @@ class MilvusDocumentStore:
         :param data: The dictionary to use to create the document store.
         :return: A new document store.
         """
-        pass
+        for conn_arg_key, conn_arg_value in data["init_parameters"]["connection_args"].items():
+            if isinstance(conn_arg_value, dict) and "type" in conn_arg_value and conn_arg_value["type"] == "env_var":
+                # deserialize_secrets_inplace(data["init_parameters"]["connection_args"], keys=[conn_arg_key])
+                ...
+
+        if "builtin_function" in data["init_parameters"]:
+            builtin_function = []
+            for func_init_dict in data["init_parameters"]["builtin_function"]:
+                func_type = func_init_dict["type"]
+                func_params = func_init_dict["init_parameters"]
+
+                # Import the function class dynamically
+                module_name, class_name = func_type.rsplit(".", 1)
+                module = importlib.import_module(module_name)
+                func_class = getattr(module, class_name)
+
+                # Instantiate the function with parameters
+                func_instance = func_class(**func_params)
+                builtin_function.append(func_instance)
+
+            data["init_parameters"]["builtin_function"] = builtin_function
+
+        return default_from_dict(cls, data)
 
     def _init(
         self,

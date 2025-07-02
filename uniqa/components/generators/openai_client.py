@@ -3,32 +3,36 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import sys
+
+import json
 from typing import Any, Dict, List, Optional, Union
 
 from openai import OpenAI, Stream
-from openai.types.chat import ChatCompletion, ChatCompletionChunk
+from openai.types.chat.chat_completion import Choice
+from openai.types.chat import ChatCompletion, ChatCompletionChunk, ChatCompletionMessage
 
-from uniqa import component, default_from_dict, default_to_dict, logging
-from uniqa.components.generators.chat.openai import (
-    _check_finish_reason,
-    _convert_chat_completion_chunk_to_streaming_chunk,
-    _convert_chat_completion_to_chat_message,
-)
-from uniqa.components.generators.utils import _convert_streaming_chunks_to_chat_message
+from uniqa import default_from_dict, default_to_dict, logging
+# from uniqa.components.generators.chat.openai import (
+#     _check_finish_reason,
+#     _convert_chat_completion_chunk_to_streaming_chunk,
+#     _convert_chat_completion_to_chat_message,
+# )
+# from uniqa.components.generators.utils import _convert_streaming_chunks_to_chat_message
 from uniqa.dataclasses import (
     ChatMessage,
-    ComponentInfo,
-    StreamingCallbackT,
-    StreamingChunk,
-    select_streaming_callback,
+    # ComponentInfo,
+    # StreamingCallbackT,
+    # StreamingChunk,
+    # select_streaming_callback,
 )
-from uniqa.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
-from uniqa.utils.http_client import init_http_client
+# from uniqa.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
+# from uniqa.utils.http_client import init_http_client
 
-logger = logging.getLogger(__name__)
+logger = logging.logDog
 
 
-@component
+# @component
 class OpenAIGenerator:
     """
     Generates text using OpenAI's large language models (LLMs).
@@ -63,9 +67,9 @@ class OpenAIGenerator:
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        api_key: Secret = Secret.from_env_var("OPENAI_API_KEY"),
+        api_key: str = os.environ.get('OPENAI_API_KEY'),
         model: str = "gpt-4o-mini",
-        streaming_callback: Optional[StreamingCallbackT] = None,
+        # streaming_callback: Optional[StreamingCallbackT] = None,
         api_base_url: Optional[str] = None,
         organization: Optional[str] = None,
         system_prompt: Optional[str] = None,
@@ -117,11 +121,11 @@ class OpenAIGenerator:
             A dictionary of keyword arguments to configure a custom `httpx.Client`or `httpx.AsyncClient`.
             For more information, see the [HTTPX documentation](https://www.python-httpx.org/api/#client).
         """
-        self.api_key = api_key
+        self.api_key = api_key  # LPAI Token
         self.model = model
         self.generation_kwargs = generation_kwargs or {}
         self.system_prompt = system_prompt
-        self.streaming_callback = streaming_callback
+        # self.streaming_callback = streaming_callback
 
         self.api_base_url = api_base_url
         self.organization = organization
@@ -133,12 +137,13 @@ class OpenAIGenerator:
             max_retries = int(os.environ.get("OPENAI_MAX_RETRIES", "5"))
 
         self.client = OpenAI(
-            api_key=api_key.resolve_value(),
+            # api_key=api_key.resolve_value(),
+            api_key=api_key,
             organization=organization,
             base_url=api_base_url,
             timeout=timeout,
             max_retries=max_retries,
-            http_client=init_http_client(self.http_client_kwargs, async_client=False),
+            # http_client=init_http_client(self.http_client_kwargs, async_client=False),
         )
 
     def _get_telemetry_data(self) -> Dict[str, Any]:
@@ -154,42 +159,43 @@ class OpenAIGenerator:
         :returns:
             The serialized component as a dictionary.
         """
-        callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
+        # callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
         return default_to_dict(
             self,
             model=self.model,
-            streaming_callback=callback_name,
+            # streaming_callback=callback_name,
             api_base_url=self.api_base_url,
             organization=self.organization,
             generation_kwargs=self.generation_kwargs,
             system_prompt=self.system_prompt,
-            api_key=self.api_key.to_dict(),
+            api_key=self.api_key,
+            # api_key=self.api_key.to_dict(),
             http_client_kwargs=self.http_client_kwargs,
         )
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OpenAIGenerator":
-        """
-        Deserialize this component from a dictionary.
+    # @classmethod
+    # def from_dict(cls, data: Dict[str, Any]) -> "OpenAIGenerator":
+    #     """
+    #     Deserialize this component from a dictionary.
 
-        :param data:
-            The dictionary representation of this component.
-        :returns:
-            The deserialized component instance.
-        """
-        deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
-        init_params = data.get("init_parameters", {})
-        serialized_callback_handler = init_params.get("streaming_callback")
-        if serialized_callback_handler:
-            data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
-        return default_from_dict(cls, data)
+    #     :param data:
+    #         The dictionary representation of this component.
+    #     :returns:
+    #         The deserialized component instance.
+    #     """
+    #     deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
+    #     init_params = data.get("init_parameters", {})
+    #     # serialized_callback_handler = init_params.get("streaming_callback")
+    #     # if serialized_callback_handler:
+    #     #     data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
+    #     return default_from_dict(cls, data)
 
-    @component.output_types(replies=List[str], meta=List[Dict[str, Any]])
+    # @component.output_types(replies=List[str], meta=List[Dict[str, Any]])
     def run(
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        streaming_callback: Optional[StreamingCallbackT] = None,
+        # streaming_callback: Optional[StreamingCallbackT] = None,
         generation_kwargs: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -221,10 +227,10 @@ class OpenAIGenerator:
         # update generation kwargs by merging with the generation kwargs passed to the run method
         generation_kwargs = {**self.generation_kwargs, **(generation_kwargs or {})}
 
-        # check if streaming_callback is passed
-        streaming_callback = select_streaming_callback(
-            init_callback=self.streaming_callback, runtime_callback=streaming_callback, requires_async=False
-        )
+        # # check if streaming_callback is passed
+        # streaming_callback = select_streaming_callback(
+        #     init_callback=self.streaming_callback, runtime_callback=streaming_callback, requires_async=False
+        # )
 
         # adapt ChatMessage(s) to the format expected by the OpenAI API
         openai_formatted_messages = [message.to_openai_dict_format() for message in messages]
@@ -232,36 +238,90 @@ class OpenAIGenerator:
         completion: Union[Stream[ChatCompletionChunk], ChatCompletion] = self.client.chat.completions.create(
             model=self.model,
             messages=openai_formatted_messages,  # type: ignore
-            stream=streaming_callback is not None,
+            # stream=streaming_callback is not None,
             **generation_kwargs,
         )
 
         completions: List[ChatMessage] = []
-        if streaming_callback is not None:
-            num_responses = generation_kwargs.pop("n", 1)
-            if num_responses > 1:
-                raise ValueError("Cannot stream multiple responses, please set n=1.")
+        # if streaming_callback is not None:
+        #     num_responses = generation_kwargs.pop("n", 1)
+        #     if num_responses > 1:
+        #         raise ValueError("Cannot stream multiple responses, please set n=1.")
 
-            component_info = ComponentInfo.from_component(self)
-            chunks: List[StreamingChunk] = []
-            for chunk in completion:
-                chunk_delta: StreamingChunk = _convert_chat_completion_chunk_to_streaming_chunk(
-                    chunk=chunk,  # type: ignore
-                    previous_chunks=chunks,
-                    component_info=component_info,
-                )
-                chunks.append(chunk_delta)
-                streaming_callback(chunk_delta)
+        #     component_info = ComponentInfo.from_component(self)
+        #     chunks: List[StreamingChunk] = []
+        #     for chunk in completion:
+        #         chunk_delta: StreamingChunk = _convert_chat_completion_chunk_to_streaming_chunk(
+        #             chunk=chunk,  # type: ignore
+        #             previous_chunks=chunks,
+        #             component_info=component_info,
+        #         )
+        #         chunks.append(chunk_delta)
+        #         streaming_callback(chunk_delta)
 
-            completions = [_convert_streaming_chunks_to_chat_message(chunks=chunks)]
-        elif isinstance(completion, ChatCompletion):
+        #     completions = [_convert_streaming_chunks_to_chat_message(chunks=chunks)]
+        if isinstance(completion, ChatCompletion):
             completions = [
                 _convert_chat_completion_to_chat_message(completion=completion, choice=choice)
                 for choice in completion.choices
             ]
 
-        # before returning, do post-processing of the completions
-        for response in completions:
-            _check_finish_reason(response.meta)
+        # # before returning, do post-processing of the completions
+        # for response in completions:
+        #     _check_finish_reason(response.meta)
 
         return {"replies": [message.text for message in completions], "meta": [message.meta for message in completions]}
+
+
+def _convert_chat_completion_to_chat_message(completion: ChatCompletion, choice: Choice) -> ChatMessage:
+    """
+    Converts the non-streaming response from the OpenAI API to a ChatMessage.
+
+    :param completion: The completion returned by the OpenAI API.
+    :param choice: The choice returned by the OpenAI API.
+    :return: The ChatMessage.
+    """
+    message: ChatCompletionMessage = choice.message
+    text = message.content
+    tool_calls = []
+    if openai_tool_calls := message.tool_calls:
+        for openai_tc in openai_tool_calls:
+            arguments_str = openai_tc.function.arguments
+            try:
+                arguments = json.loads(arguments_str)
+                # tool_calls.append(ToolCall(id=openai_tc.id, tool_name=openai_tc.function.name, arguments=arguments))
+            except json.JSONDecodeError:
+                logger.warning(
+                    "OpenAI returned a malformed JSON string for tool call arguments. This tool call "
+                    "will be skipped. To always generate a valid JSON, set `tools_strict` to `True`. "
+                    "Tool call ID: {_id}, Tool name: {_name}, Arguments: {_arguments}",
+                    _id=openai_tc.id,
+                    _name=openai_tc.function.name,
+                    _arguments=arguments_str,
+                )
+
+    chat_message = ChatMessage.from_assistant(
+        text=text,
+        tool_calls=tool_calls,
+        meta={
+            "model": completion.model,
+            "index": choice.index,
+            "finish_reason": choice.finish_reason,
+            "usage": _serialize_usage(completion.usage),
+        },
+    )
+    return chat_message
+
+
+def _serialize_usage(usage):
+    """Convert OpenAI usage object to serializable dict recursively"""
+    if hasattr(usage, "model_dump"):
+        return usage.model_dump()
+    elif hasattr(usage, "__dict__"):
+        return {k: _serialize_usage(v) for k, v in usage.__dict__.items() if not k.startswith("_")}
+    elif isinstance(usage, dict):
+        return {k: _serialize_usage(v) for k, v in usage.items()}
+    elif isinstance(usage, list):
+        return [_serialize_usage(item) for item in usage]
+    else:
+        return usage

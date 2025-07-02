@@ -4,7 +4,7 @@
 
 from typing import Any, Dict, List, Literal, Optional
 
-from uniqa import Document
+from uniqa import Document, default_from_dict, default_to_dict
 # from uniqa import Document, component, default_from_dict, default_to_dict
 from uniqa.components.embedders.backends.sentence_transformers_backend import (
     _SentenceTransformersEmbeddingBackend,
@@ -12,7 +12,7 @@ from uniqa.components.embedders.backends.sentence_transformers_backend import (
 )
 from uniqa.utils import ComponentDevice
 # from uniqa.utils import ComponentDevice, Secret, deserialize_secrets_inplace
-# from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
+from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
 
 
 # @component
@@ -149,56 +149,56 @@ class SentenceTransformersDocumentEmbedder:
         """
         return {"model": self.model}
 
-    # def to_dict(self) -> Dict[str, Any]:
-    #     """
-    #     Serializes the component to a dictionary.
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the component to a dictionary.
 
-    #     :returns:
-    #         Dictionary with serialized data.
-    #     """
-    #     serialization_dict = default_to_dict(
-    #         self,
-    #         model=self.model,
-    #         device=self.device.to_dict(),
-    #         token=self.token.to_dict() if self.token else None,
-    #         prefix=self.prefix,
-    #         suffix=self.suffix,
-    #         batch_size=self.batch_size,
-    #         progress_bar=self.progress_bar,
-    #         normalize_embeddings=self.normalize_embeddings,
-    #         meta_fields_to_embed=self.meta_fields_to_embed,
-    #         embedding_separator=self.embedding_separator,
-    #         trust_remote_code=self.trust_remote_code,
-    #         local_files_only=self.local_files_only,
-    #         truncate_dim=self.truncate_dim,
-    #         model_kwargs=self.model_kwargs,
-    #         tokenizer_kwargs=self.tokenizer_kwargs,
-    #         config_kwargs=self.config_kwargs,
-    #         precision=self.precision,
-    #         encode_kwargs=self.encode_kwargs,
-    #         backend=self.backend,
-    #     )
-    #     if serialization_dict["init_parameters"].get("model_kwargs") is not None:
-    #         serialize_hf_model_kwargs(serialization_dict["init_parameters"]["model_kwargs"])
-    #     return serialization_dict
+        :returns:
+            Dictionary with serialized data.
+        """
+        serialization_dict = default_to_dict(
+            self,
+            model=self.model,
+            device=self.device.to_dict(),
+            token=self.token.to_dict() if self.token else None,
+            prefix=self.prefix,
+            suffix=self.suffix,
+            batch_size=self.batch_size,
+            progress_bar=self.progress_bar,
+            normalize_embeddings=self.normalize_embeddings,
+            meta_fields_to_embed=self.meta_fields_to_embed,
+            embedding_separator=self.embedding_separator,
+            trust_remote_code=self.trust_remote_code,
+            local_files_only=self.local_files_only,
+            truncate_dim=self.truncate_dim,
+            model_kwargs=self.model_kwargs,
+            tokenizer_kwargs=self.tokenizer_kwargs,
+            config_kwargs=self.config_kwargs,
+            precision=self.precision,
+            encode_kwargs=self.encode_kwargs,
+            backend=self.backend,
+        )
+        if serialization_dict["init_parameters"].get("model_kwargs") is not None:
+            serialize_hf_model_kwargs(serialization_dict["init_parameters"]["model_kwargs"])
+        return serialization_dict
 
-    # @classmethod
-    # def from_dict(cls, data: Dict[str, Any]) -> "SentenceTransformersDocumentEmbedder":
-    #     """
-    #     Deserializes the component from a dictionary.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SentenceTransformersDocumentEmbedder":
+        """
+        Deserializes the component from a dictionary.
 
-    #     :param data:
-    #         Dictionary to deserialize from.
-    #     :returns:
-    #         Deserialized component.
-    #     """
-    #     init_params = data["init_parameters"]
-    #     if init_params.get("device") is not None:
-    #         init_params["device"] = ComponentDevice.from_dict(init_params["device"])
-    #     deserialize_secrets_inplace(init_params, keys=["token"])
-    #     if init_params.get("model_kwargs") is not None:
-    #         deserialize_hf_model_kwargs(init_params["model_kwargs"])
-    #     return default_from_dict(cls, data)
+        :param data:
+            Dictionary to deserialize from.
+        :returns:
+            Deserialized component.
+        """
+        init_params = data["init_parameters"]
+        if init_params.get("device") is not None:
+            init_params["device"] = ComponentDevice.from_dict(init_params["device"])
+        # deserialize_secrets_inplace(init_params, keys=["token"])
+        if init_params.get("model_kwargs") is not None:
+            deserialize_hf_model_kwargs(init_params["model_kwargs"])
+        return default_from_dict(cls, data)
 
     def warm_up(self):
         """

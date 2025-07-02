@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from lazy_imports import LazyImporter
 
 _import_structure = {
-    # "openai": ["OpenAIGenerator"],
+    "openai_client": ["OpenAIGenerator"],
     # "azure": ["AzureOpenAIGenerator"],
     "hugging_face_local": ["HuggingFaceLocalGenerator"],
     # "hugging_face_api": ["HuggingFaceAPIGenerator"],
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     # from .azure import AzureOpenAIGenerator as AzureOpenAIGenerator
     # from .hugging_face_api import HuggingFaceAPIGenerator as HuggingFaceAPIGenerator
     from .hugging_face_local import HuggingFaceLocalGenerator as HuggingFaceLocalGenerator
-    # from .openai import OpenAIGenerator as OpenAIGenerator
+    from .openai_client import OpenAIGenerator as OpenAIGenerator
     # from .openai_dalle import DALLEImageGenerator as DALLEImageGenerator
 
 else:
