@@ -14,7 +14,7 @@
 
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-import examples.gradio as gr
+import uniqa.api.gradio as gr
 import uuid
 import time
 from uniqa.components.indexs.faiss_index import FaissEmbeddingSearcher

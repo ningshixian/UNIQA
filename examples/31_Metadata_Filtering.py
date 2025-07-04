@@ -1,4 +1,5 @@
 # https://haystack.deepset.ai/tutorials/31_metadata_filtering
+# https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/31_Metadata_Filtering.ipynb
 
 import os
 import sys
@@ -8,21 +9,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime
 
 from uniqa import Document
-from uniqa.components.builders.answer_builder import AnswerBuilder
-from uniqa.components.builders.prompt_builder import PromptBuilder
-from uniqa.components.embedders import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
-from uniqa.components.generators import HuggingFaceLocalGenerator
 from uniqa.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
-from uniqa.components.writers import DocumentWriter
 from uniqa.document_stores import InMemoryDocumentStore
 
-from uniqa.utils import ComponentDevice
-from uniqa.components.converters import PyPDFToDocument, JSONConverter
-# from uniqa.components.joiners import DocumentJoiner
-from uniqa.components.preprocessors import DocumentCleaner
-from uniqa.components.preprocessors import RecursiveDocumentSplitter, ChineseDocumentSpliter
-from uniqa.components.rankers import SentenceTransformersSimilarityRanker
-# from uniqa.document_stores import MilvusDocumentStore
+from uniqa.components.retrievers.milvus import MilvusRetriever
+from uniqa.document_stores.milvus import MilvusDocumentStore
 
 
 # Preparing Documents

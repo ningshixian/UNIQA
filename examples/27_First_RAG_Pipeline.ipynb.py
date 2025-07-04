@@ -1,12 +1,13 @@
 # https://haystack.deepset.ai/tutorials/27_first_rag_pipeline
+# https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/27_First_RAG_Pipeline.ipynb
 
 import os
 import sys
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 import json
+from typing import List
 from pathlib import Path
 
 from uniqa import Document
@@ -16,7 +17,7 @@ from uniqa.components.embedders import SentenceTransformersDocumentEmbedder, Sen
 from uniqa.components.generators import HuggingFaceLocalGenerator
 from uniqa.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
 from uniqa.components.writers import DocumentWriter
-from uniqa.document_stores import InMemoryDocumentStore
+from uniqa.document_stores.in_memory import InMemoryDocumentStore
 
 from uniqa.utils import ComponentDevice
 from uniqa.components.converters import PyPDFToDocument, JSONConverter
@@ -41,67 +42,72 @@ document_cleaner = DocumentCleaner(
 )
 document_splitter = ChineseDocumentSpliter(
     split_by="sentence",
-    split_length=10,
+    split_length=5,
     split_overlap=0,
     language="zh",
     respect_sentence_boundary=False,
 )
 # document_splitter = ChineseDocumentSpliter(
 #     split_by="word",
-#     split_length=200,
-#     split_overlap=0,
+#     split_length=512,
+#     split_overlap=32,
 #     language="zh",
-#     respect_sentence_boundary=True,
+#     respect_sentence_boundary=True,   # 耗时
 # )
 # document_splitter = RecursiveDocumentSplitter(
 #     separators=["\\n\\n", "sentence"]
 # )
-document_splitter.warm_up()
-
 doc_embedder = SentenceTransformersDocumentEmbedder(model="infgrad/stella-base-zh-v3-1792d")  # dunzhang/stella-large-zh-v3-1792d
 text_embedder = SentenceTransformersTextEmbedder(model="infgrad/stella-base-zh-v3-1792d")
-doc_embedder.warm_up()
-text_embedder.warm_up()
-
 doc_store = InMemoryDocumentStore(bm25_algorithm="BM25Plus")
 writer = DocumentWriter(document_store=doc_store)
 
+document_splitter.warm_up()
+doc_embedder.warm_up()
+text_embedder.warm_up()
+
 
 def basic_rag_pipeline(query):
-    
-    docs = []
-    samples_path = Path(os.path.dirname(os.path.abspath(__file__)) + "/test_documents")
-    for path in list(samples_path.iterdir()):
-        if path.is_file() and path.suffix == ".pdf":
-            converter = PyPDFToDocument()
-        if path.is_file() and path.suffix == ".json":
-            converter = JSONConverter(
-                jq_schema=".[]", 
-                content_key="standard_question", 
-                extra_meta_fields={"id", "similar_questions", "answer", "category"}
-            )
-        # 读取文件
-        _docs = converter.run(sources=[path])["documents"]  # [doc1, doc2, ...]
-        docs.extend(_docs)
+
+    def load_data(doc_path: str,) -> List[Document]:
+        docs = []
+        samples_path = Path(doc_path)
+        for path in list(samples_path.iterdir()):
+            if path.is_file() and path.suffix == ".pdf":
+                converter = PyPDFToDocument()
+            if path.is_file() and path.suffix == ".json":
+                converter = JSONConverter(
+                    jq_schema=".[]", 
+                    content_key="standard_question", 
+                    extra_meta_fields={"id", "similar_questions", "answer", "category"}
+                )
+            _docs = converter.run(sources=[path])["documents"]  # [doc1, doc2, ...]
+            docs.extend(_docs)
+        return docs
+
+    # 读取文档数据
+    doc_path = os.path.dirname(os.path.abspath(__file__)) + "/test_documents"
+    docs = load_data(doc_path)
 
     # 切片
-    docs = document_cleaner.run(documents=_docs)["documents"]
+    docs = document_cleaner.run(documents=docs)["documents"]
     doc_chunks = document_splitter.run(documents=docs)["documents"]
-    doc_chunks = doc_chunks[:50]
+    doc_chunks = doc_chunks[:50]    # 
     for d in doc_chunks:
         print("---->" + d.content)
 
-    # 嵌入
+    # Write Documents to the DocumentStore
     docs_with_embeddings = doc_embedder.run(doc_chunks)["documents"]
-    writer.run(docs_with_embeddings)
-    query_embedding = text_embedder.run(query)["embedding"]
-
-    """Create the querying pipelines"""
-
-    # 向量检索
+    writer.run(docs_with_embeddings)    # 同 doc_store.write_documents(docs_with_embeddings)
     filled_document_store = writer.document_store
     print(filled_document_store.count_documents())  # 68
     # filled_document_store.save_to_disk("./test/documents.json")
+
+    """Create the querying pipelines"""
+
+    query_embedding = text_embedder.run(query)["embedding"]
+
+    # 向量检索
     vector_retriever = InMemoryEmbeddingRetriever(document_store=filled_document_store, top_k=5)
     result1 = vector_retriever.run(query_embedding=query_embedding, scale_score=True)
     # print(result1["documents"])
@@ -119,17 +125,17 @@ def basic_rag_pipeline(query):
         sort_by_score=True
     )
     candidate_docs = doc_joiner.run(documents=[result1["documents"], result2["documents"]])["documents"]
-    print([x.content for x in candidate_docs])
 
     # 重排序
     ranker = SentenceTransformersSimilarityRanker(top_k=5)
     ranker.warm_up()
     candidate_docs = ranker.run(query=query, documents=candidate_docs)["documents"]
-    print([x.content for x in candidate_docs])
+    # print([x.content for x in candidate_docs])
 
     # Define a Template Prompt
+    # 使用了标准的jinja格式的prompt模板
     prompt_template = """
-    根据以下信息，回答问题。
+    根据以下信息，使用中文回答问题。
 
     Context:
     {% for document in documents %}
@@ -163,7 +169,7 @@ def basic_rag_pipeline(query):
             "repetition_penalty": 1.2,
         }   # transformers generation()参数
     )["replies"]
-    print(replies)
+    print(replies[0])
 
     # 解析答案
     answer_builder = AnswerBuilder(pattern="Answer: (.*)")
@@ -174,6 +180,7 @@ def basic_rag_pipeline(query):
     return answers
 
 
+# Asking a Question
 query = "怎么联系Lynk & Co领克？"
 answers = basic_rag_pipeline(query)
 print(answers)
