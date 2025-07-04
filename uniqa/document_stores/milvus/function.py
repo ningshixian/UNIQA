@@ -1,13 +1,11 @@
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-# from haystack import default_from_dict, default_to_dict
+from uniqa import default_from_dict, default_to_dict
 from pymilvus import Function, FunctionType
 
-VECTOR_FIELD = "vector"
 SPARSE_VECTOR_FIELD = "sparse"
 TEXT_FIELD = "text"
-PRIMARY_FIELD = "id"
 
 
 class BaseMilvusBuiltInFunction:

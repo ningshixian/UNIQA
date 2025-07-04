@@ -1,6 +1,6 @@
 from typing import Any, Dict, Union
 
-# from uniqa.core.errors import FilterError
+# from uniqa.errors import Exception
 
 LOGIC_OPERATORS = [
     "AND",

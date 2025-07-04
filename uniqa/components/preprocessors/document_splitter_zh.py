@@ -1,6 +1,7 @@
 """
 解决haystack对中文不友好的问题，提供中文DocumentSplitter组件
 https://zhuanlan.zhihu.com/p/1905196184680764047
+https://github.com/mc112611/haystack/blob/307f8340b2e1a9104efe4e33d8c1885d17143c36/haystack/components/preprocessors/test_chinese_document_spliter.py
 
 pip install haystack-ai == 2.12.1
 pip install hanlp
@@ -51,18 +52,6 @@ class ChineseDocumentSpliter:
     This is a common preprocessing step during indexing. It helps Embedders create meaningful semantic representations
     and prevents exceeding language model context limits.
 
-    The DocumentSplitter is compatible with the following DocumentStores:
-    - [Astra](https://docs.haystack.deepset.ai/docs/astradocumentstore)
-    - [Chroma](https://docs.haystack.deepset.ai/docs/chromadocumentstore) limited support, overlapping information is
-      not stored
-    - [Elasticsearch](https://docs.haystack.deepset.ai/docs/elasticsearch-document-store)
-    - [OpenSearch](https://docs.haystack.deepset.ai/docs/opensearch-document-store)
-    - [Pgvector](https://docs.haystack.deepset.ai/docs/pgvectordocumentstore)
-    - [Pinecone](https://docs.haystack.deepset.ai/docs/pinecone-document-store) limited support, overlapping
-       information is not stored
-    - [Qdrant](https://docs.haystack.deepset.ai/docs/qdrant-document-store)
-    - [Weaviate](https://docs.haystack.deepset.ai/docs/weaviatedocumentstore)
-
     ### Usage example
 
     ```python
@@ -71,7 +60,22 @@ class ChineseDocumentSpliter:
 
     doc = Document(content="Moonlight shimmered softly, wolves howled nearby, night enveloped everything.")
 
-    splitter = ChineseDocumentSpliter(split_by="word", split_length=3, split_overlap=0)
+    splitter = ChineseDocumentSpliter(
+        split_by="sentence",
+        split_length=10,
+        split_overlap=0,
+        language="zh",
+        respect_sentence_boundary=False,
+    )
+
+    # splitter = ChineseDocumentSpliter(
+    #     split_by="word",
+    #     split_length=200,
+    #     split_overlap=0,
+    #     language="zh",
+    #     respect_sentence_boundary=True,
+    # )
+
     result = splitter.run(documents=[doc])
     ```
     """

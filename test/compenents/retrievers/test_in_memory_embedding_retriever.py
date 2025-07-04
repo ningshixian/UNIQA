@@ -17,7 +17,7 @@ from uniqa import DeserializationError
 # from uniqa.testing.factory import document_store_class
 from uniqa.components.retrievers.in_memory.embedding_retriever import InMemoryEmbeddingRetriever
 from uniqa.dataclasses import Document
-from uniqa.document_stores import InMemoryDocumentStore
+from uniqa.document_stores.in_memory import InMemoryDocumentStore
 
 
 docs = [
@@ -194,3 +194,4 @@ class TestMemoryEmbeddingRetriever:
         assert results_docs
         assert len(results_docs) == top_k
         assert results_docs[0].embedding == [1.0, 1.0, 1.0, 1.0]
+

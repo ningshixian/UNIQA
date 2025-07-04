@@ -10,7 +10,7 @@ _import_structure = {
     # "filter_retriever": ["FilterRetriever"],
     "in_memory": ["InMemoryBM25Retriever", "InMemoryEmbeddingRetriever"],
     # "sentence_window_retriever": ["SentenceWindowRetriever"],
-    # "indexs": ["FaissIndex", "MilvusIndex"],
+    "milvus": ["MilvusEmbeddingRetriever", "MilvusHybridRetriever", "MilvusSparseEmbeddingRetriever"]
 }
 
 # from .auto_merging_retriever import AutoMergingRetriever as AutoMergingRetriever
@@ -19,4 +19,6 @@ from .in_memory import InMemoryBM25Retriever as InMemoryBM25Retriever
 from .in_memory import InMemoryEmbeddingRetriever as InMemoryEmbeddingRetriever
 # from .sentence_window_retriever import SentenceWindowRetriever as SentenceWindowRetriever
 # from .indexs import FaissIndex as FaissIndex
-# from .indexs import MilvusIndex as MilvusIndex
+from .milvus import MilvusEmbeddingRetriever as MilvusEmbeddingRetriever
+from .milvus import MilvusHybridRetriever as MilvusHybridRetriever
+from .milvus import MilvusSparseEmbeddingRetriever as MilvusSparseEmbeddingRetriever

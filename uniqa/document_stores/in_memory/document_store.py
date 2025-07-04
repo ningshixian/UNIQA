@@ -65,6 +65,11 @@ _FREQ_VOCAB_FOR_IDF_STORAGES: Dict[str, Counter] = {}
 class InMemoryDocumentStore:
     """
     Stores data in-memory. It's ephemeral and cannot be saved to disk.
+    
+    提供以下的功能：
+    1. 存储 / 删除 / 过滤 Document
+    2. BM25检索 bm25_retrieval 
+    3. 向量检索 embedding_retrieval 
     """
 
     def __init__(  # pylint: disable=too-many-positional-arguments

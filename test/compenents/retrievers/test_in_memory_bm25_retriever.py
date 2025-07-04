@@ -16,7 +16,7 @@ from uniqa import DeserializationError
 # from uniqa.testing.factory import document_store_class
 from uniqa.components.retrievers.in_memory import InMemoryBM25Retriever
 from uniqa.dataclasses import Document
-from uniqa.document_stores import InMemoryDocumentStore
+from uniqa.document_stores.in_memory import InMemoryDocumentStore
 
 
 docs = [

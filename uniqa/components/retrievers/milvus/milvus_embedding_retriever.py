@@ -1,16 +1,16 @@
+# https://github.com/milvus-io/milvus-haystack/blob/main/src/milvus_haystack/document_store.py#:~:text=milvus_embedding_retriever
 import importlib
 from typing import Any, Dict, List, Optional
 
-from uniqa import Document
-# from haystack import DeserializationError, Document, component, default_from_dict, default_to_dict
-from haystack.dataclasses.sparse_embedding import SparseEmbedding
+from uniqa import DeserializationError, Document, default_from_dict, default_to_dict
+from uniqa.dataclasses.sparse_embedding import SparseEmbedding
 from pymilvus import RRFRanker
 from pymilvus.client.abstract import BaseRanker
 
-from milvus_haystack import MilvusDocumentStore
+from uniqa.document_stores.milvus.milvus_document_store import MilvusDocumentStore
 
 
-@component
+# @component
 class MilvusEmbeddingRetriever:
     """
     A component for retrieving documents from a Milvus Document Store.
@@ -57,7 +57,7 @@ class MilvusEmbeddingRetriever:
 
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    # @component.output_types(documents=List[Document])
     def run(self, query_embedding: List[float]) -> Dict[str, List[Document]]:
         """
         Retrieve documents from the `MilvusDocumentStore`, based on their dense embeddings.
@@ -73,7 +73,7 @@ class MilvusEmbeddingRetriever:
         return {"documents": docs}
 
 
-@component
+# @component
 class MilvusSparseEmbeddingRetriever:
     """
     A component for retrieving documents using sparse embeddings from a Milvus Document Store.
@@ -120,7 +120,7 @@ class MilvusSparseEmbeddingRetriever:
 
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    # @component.output_types(documents=List[Document])
     def run(
         self, query_sparse_embedding: Optional[SparseEmbedding] = None, query_text: Optional[str] = None
     ) -> Dict[str, List[Document]]:
@@ -139,7 +139,7 @@ class MilvusSparseEmbeddingRetriever:
         return {"documents": docs}
 
 
-@component
+# @component
 class MilvusHybridRetriever:
     """
     A component for retrieving documents using hybrid search from a Milvus Document Store.
@@ -212,7 +212,7 @@ class MilvusHybridRetriever:
             )
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    # @component.output_types(documents=List[Document])
     def run(
         self,
         query_embedding: List[float],

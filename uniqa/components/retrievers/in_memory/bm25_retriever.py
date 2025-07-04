@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from uniqa import DeserializationError, Document, default_from_dict, default_to_dict
 # from haystack import DeserializationError, Document, component, default_from_dict, default_to_dict
-from uniqa.document_stores import InMemoryDocumentStore
+from uniqa.document_stores.in_memory import InMemoryDocumentStore
 # from uniqa.document_stores.types import FilterPolicy
 
 

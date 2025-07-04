@@ -8,10 +8,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
-from docling.chunking import BaseChunk, BaseChunker, HybridChunker
-from docling.datamodel.document import DoclingDocument
-from docling.document_converter import DocumentConverter
 from uniqa import Document
+from uniqa.lazy_imports import LazyImport
+
+with LazyImport(message="Run 'pip install docling'") as docling_import:
+    from docling.chunking import BaseChunk, BaseChunker, HybridChunker
+    from docling.datamodel.document import DoclingDocument
+    from docling.document_converter import DocumentConverter
 
 
 class ExportType(str, Enum):
@@ -83,6 +86,7 @@ class DoclingConverter:
             meta_extractor: The extractor instance to use for populating the output
                 document metadata; if not set, a system default is used.
         """
+        docling_import.check()
         self._converter = converter or DocumentConverter()
         self._convert_kwargs = convert_kwargs if convert_kwargs is not None else {}
         self._export_type = export_type

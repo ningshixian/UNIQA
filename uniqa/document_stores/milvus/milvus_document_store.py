@@ -1,12 +1,14 @@
+# https://github.com/milvus-io/milvus-haystack/blob/main/src/milvus_haystack/document_store.py
 import importlib
 import logging
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Union
+from enum import Enum
 
+from uniqa import logging
 from uniqa import Document, default_from_dict, default_to_dict
 from uniqa.dataclasses.sparse_embedding import SparseEmbedding
-# from uniqa.core.errors import DocumentStoreError
-# from uniqa.core.errors import FilterError
+from uniqa.document_stores.types import DuplicatePolicy
 # from uniqa.utils import Secret, deserialize_secrets_inplace
 from pymilvus import (
     AnnSearchRequest,
@@ -23,12 +25,12 @@ from pymilvus.client.abstract import BaseRanker
 from pymilvus.client.types import LoadState
 from pymilvus.orm.types import infer_dtype_bydata
 
-from uniqa.document_stores.filters import parse_filters
-from uniqa.document_stores.function import BaseMilvusBuiltInFunction, BM25BuiltInFunction
+from uniqa.document_stores.milvus.filters import parse_filters
+from uniqa.document_stores.milvus.function import BaseMilvusBuiltInFunction, BM25BuiltInFunction
+# from .utils.constant import PRIMARY_FIELD, TEXT_FIELD, VECTOR_FIELD, EmbeddingMode
 
-logger = logging.getLogger(__name__)
+logger = logging.logDog
 
-from enum import Enum
 
 VECTOR_FIELD = "vector"
 SPARSE_VECTOR_FIELD = "sparse"
@@ -50,8 +52,8 @@ class EmbeddingMode(Enum):
     EMBEDDING_MODEL = "embedding_model"
 
 
-# class MilvusStoreError(DocumentStoreError):
-#     pass
+class MilvusStoreError(Exception):
+    pass
 
 
 DEFAULT_MILVUS_CONNECTION = {
@@ -72,7 +74,7 @@ class MilvusDocumentStore:
 
     def __init__(
         self,
-        collection_name: str = "HaystackCollection",
+        collection_name: str = "uniqaCollection",
         collection_description: str = "",
         collection_properties: Optional[Dict[str, Any]] = None,
         connection_args: Optional[Dict[str, Any]] = None,
@@ -100,7 +102,7 @@ class MilvusDocumentStore:
         https://milvus.io/docs
 
         :param collection_name: The name of the collection to be created.
-            "HaystackCollection" as default.
+            "uniqaCollection" as default.
         :param collection_description: The description of the collection.
         :param collection_properties: The properties of the collection.
             Defaults to None.
@@ -250,17 +252,17 @@ class MilvusDocumentStore:
         # Check only one BM25BuiltInFunction in self.builtin_function
         if len([function for function in self.builtin_function if isinstance(function, BM25BuiltInFunction)]) > 1:
             error_msg = "Only one BM25BuiltInFunction is allowed"
-            raise Exception(error_msg)
+            raise MilvusStoreError(error_msg)
         self._input_field_schema_kwargs = {}
         for function in self.builtin_function:
             # The `isinstance` check is not adapted to the unittest, so here we use the class name check.
             if function.__class__.__name__ == BM25BuiltInFunction.__name__:
                 if self._text_field != function.input_field_names[0]:
                     error_msg = "BM25BuiltInFunction input_field_names must be the same as text_field"
-                    raise Exception(error_msg)
+                    raise MilvusStoreError(error_msg)
                 if self._sparse_vector_field != function.output_field_names[0]:
                     error_msg = "BM25BuiltInFunction output_field_names must be the same as sparse_vector_field"
-                    raise Exception(error_msg)
+                    raise MilvusStoreError(error_msg)
                 self._sparse_mode = EmbeddingMode.BUILTIN_FUNCTION
                 self._input_field_schema_kwargs = function.get_input_field_schema_kwargs()
 
@@ -376,7 +378,7 @@ class MilvusDocumentStore:
         docs = [self._parse_document(d) for d in res]
         return docs
 
-    def write_documents(self, documents: List[Document], policy: str="NONE") -> int:
+    def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
         """
         Writes documents into the store.
 
@@ -391,7 +393,7 @@ class MilvusDocumentStore:
             err_msg = "param 'documents' must contain a list of objects of type Document"
             raise ValueError(err_msg)
 
-        if policy not in ["NONE"]:
+        if policy not in [DuplicatePolicy.NONE]:
             logger.warning(
                 f"MilvusStore only supports `DuplicatePolicy.NONE`, but got {policy}. "
                 "Milvus does not currently check if entity primary keys are duplicates."
@@ -560,10 +562,9 @@ class MilvusDocumentStore:
         :param data: The dictionary to use to create the document store.
         :return: A new document store.
         """
-        for conn_arg_key, conn_arg_value in data["init_parameters"]["connection_args"].items():
-            if isinstance(conn_arg_value, dict) and "type" in conn_arg_value and conn_arg_value["type"] == "env_var":
-                # deserialize_secrets_inplace(data["init_parameters"]["connection_args"], keys=[conn_arg_key])
-                ...
+        # for conn_arg_key, conn_arg_value in data["init_parameters"]["connection_args"].items():
+        #     if isinstance(conn_arg_value, dict) and "type" in conn_arg_value and conn_arg_value["type"] == "env_var":
+        #         deserialize_secrets_inplace(data["init_parameters"]["connection_args"], keys=[conn_arg_key])
 
         if "builtin_function" in data["init_parameters"]:
             builtin_function = []
@@ -770,7 +771,7 @@ class MilvusDocumentStore:
     #             "Some secret values are not encrypted. Please use `Secret` class to encrypt them. "
     #             "The best way to implement it is to use `Secret.from_env` to load from environment variables. "
     #             "For example:\n"
-    #             "from haystack.utils import Secret\n"
+    #             "from uniqa.utils import Secret\n"
     #             "token = Secret.from_env('YOUR_TOKEN_ENV_VAR_NAME')"
     #         )
     #     return secret
@@ -829,7 +830,7 @@ class MilvusDocumentStore:
                 "to use sparse embedding retrieval. Such as: "
                 "MilvusDocumentStore(..., sparse_vector_field='sparse_vector',...)"
             )
-            raise Exception(message)
+            raise MilvusStoreError(message)
 
         if self.sparse_search_params is None:
             if self._sparse_mode == EmbeddingMode.EMBEDDING_MODEL:
@@ -881,7 +882,7 @@ class MilvusDocumentStore:
                 "to use hybrid retrieval. Such as: "
                 "MilvusDocumentStore(..., sparse_vector_field='sparse_vector',...)"
             )
-            raise Exception(message)
+            raise MilvusStoreError(message)
 
         if reranker is None:
             reranker = RRFRanker()
@@ -1030,9 +1031,10 @@ class MilvusDocumentStore:
             if self._sparse_mode == EmbeddingMode.BUILTIN_FUNCTION:
                 search_data = query_text
             else:  # self._sparse_mode == EmbeddingMode.EMBEDDING_MODEL
+                print(type(query_embedding))
                 if not isinstance(query_embedding, SparseEmbedding):
                     error_msg = "Query embedding must be a SparseEmbedding instance"
-                    raise Exception(error_msg)
+                    raise MilvusStoreError(error_msg)
                 search_data = self._convert_sparse_to_dict(query_embedding)
         return search_data
 

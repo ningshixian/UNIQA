@@ -21,10 +21,10 @@ from uniqa.components.generators import OpenAIGenerator
 
 import os
 # https://lpai-llm.lixiang.com/statistics
-lpai_token = "ak-infer-ZW50ZXJwcmlzLXNtYXJ0YnVzaW5lc3M6ZnVmcGt6OmZ1ZnBrei1kZWZhdWx0Om5pbmdzaGl4aWFuQGxpeGlhbmcuY29tOmluZmVy_Yjk2NWQ4MmUtMjdmMC00OWVmLWIxZDktMDkzYTc5NjMzYjRl"
+lpai_token = "..."
 os.environ["OPENAI_API_KEY"] = lpai_token
 
-base_url = "https://lpai-llm.lixiang.com/inference/deepseek-ai/deepseek-v3/v1"
+base_url = "xxx/inference/deepseek-ai/deepseek-v3/v1"
 model = "deepseek-ai__deepseek-v3-0324"
 
 llm = OpenAIGenerator(
