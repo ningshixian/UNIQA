@@ -15,9 +15,7 @@ from uniqa.components.builders.answer_builder import AnswerBuilder
 from uniqa.components.builders.chat_prompt_builder import ChatPromptBuilder
 from uniqa.components.embedders import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
 from uniqa.components.generators.chat import HuggingFaceLocalChatGenerator
-from uniqa.components.retrievers.in_memory import InMemoryBM25Retriever, InMemoryEmbeddingRetriever
 from uniqa.components.writers import DocumentWriter
-from uniqa.document_stores.in_memory import InMemoryDocumentStore
 from uniqa.dataclasses import ChatMessage, ToolCall
 
 from uniqa.utils import ComponentDevice
@@ -27,9 +25,12 @@ from uniqa.components.preprocessors import DocumentCleaner
 from uniqa.components.preprocessors import RecursiveDocumentSplitter, ChineseDocumentSpliter
 from uniqa.components.rankers import SentenceTransformersSimilarityRanker
 
+from uniqa.document_stores.in_memory import InMemoryDocumentStore
+from uniqa.components.retrievers.in_memory import InMemoryEmbeddingRetriever, InMemoryBM25Retriever
+
+from uniqa.document_stores.milvus import MilvusDocumentStore
 from uniqa.components.retrievers.milvus import MilvusEmbeddingRetriever, MilvusSparseEmbeddingRetriever
 from uniqa.components.retrievers.milvus import MilvusHybridRetriever
-from uniqa.document_stores.milvus import MilvusDocumentStore
 
 
 # 初始化组件
@@ -58,7 +59,12 @@ document_splitter = ChineseDocumentSpliter(
 # document_splitter = RecursiveDocumentSplitter(
 #     separators=["\\n\\n", "sentence"]
 # )
-doc_embedder = SentenceTransformersDocumentEmbedder(model="infgrad/stella-base-zh-v3-1792d")  # dunzhang/stella-large-zh-v3-1792d
+
+doc_embedder = SentenceTransformersDocumentEmbedder(
+    model="infgrad/stella-base-zh-v3-1792d",  # dunzhang/stella-large-zh-v3-1792d
+    # meta_fields_to_embed=["similar_questions"],   # 选中的元数据会拼接到文档内容中进行嵌入
+    # normalize_embeddings=True,  # 向量归一化
+)
 text_embedder = SentenceTransformersTextEmbedder(model="infgrad/stella-base-zh-v3-1792d")
 doc_store = InMemoryDocumentStore(bm25_algorithm="BM25Plus")
 writer = DocumentWriter(document_store=doc_store)
@@ -74,24 +80,18 @@ DEFAULT_CONNECTION_ARGS = {
 }
 milvus_document_store = MilvusDocumentStore(
     connection_args=DEFAULT_CONNECTION_ARGS,
-    consistency_level="Strong",
-    drop_old=True,
-    text_field="text",
-    vector_field="vector",
+    consistency_level="Session",  # Options: Strong, Bounded, Eventually, Session, Customized.
+    drop_old=True,      # 是否删除旧集合 → DEFAULT_CONNECTION_ARGS
+    index_params={"index_type": "AUTOINDEX", "metric_type": "COSINE", "params": {}},
+    # index_params={"index_type": "HNSW", "metric_type": "L2", "params": {"M": 16, "efConstruction": 64}},
     sparse_vector_field="sparse",
-    # sparse_search_params={
-    #     "metric_type": "BM25",
-    # },
-    sparse_index_params={
-        # "index_type": "AUTOINDEX",
-        "index_type": "SPARSE_INVERTED_INDEX",  # local mode only support SPARSE_INVERTED_INDEX
-        "metric_type": "BM25",
-    },
+    sparse_index_params={"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "BM25", "params": {}},
+    # local mode only support SPARSE_INVERTED_INDEX
     builtin_function=[
         BM25BuiltInFunction(
             function_name="bm25_function",
             input_field_names="text",
-            output_field_names="sparse",
+            output_field_names="sparse",  # same as sparse_vector_field
             # You can customize the analyzer_params and enable_match here.
             # See https://milvus.io/docs/analyzer-overview.md for more details.
             # analyzer_params=analyzer_params_custom,
@@ -99,8 +99,16 @@ milvus_document_store = MilvusDocumentStore(
         )
     ],
 )
-ranker = SentenceTransformersSimilarityRanker(top_k=5)
 
+from uniqa.components.rankers import SentenceTransformersSimilarityRanker
+ranker = SentenceTransformersSimilarityRanker(
+    model="cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", 
+    # model="cross-encoder/ms-marco-MiniLM-L-6-v2", 
+    # device=ComponentDevice.from_str("cpu"),  #
+    # device=ComponentDevice.resolve_device(None),
+    top_k=5, 
+)
+ranker.warm_up()
 
 def basic_rag_pipeline(query):
 
@@ -120,29 +128,58 @@ def basic_rag_pipeline(query):
     docs_with_embeddings = doc_embedder.run(docs)["documents"]
     milvus_document_store.write_documents(docs_with_embeddings)  # return int
 
-    # milvus 混合检索
-    milvus_retriever = MilvusHybridRetriever(
-        document_store=milvus_document_store,
-        # reranker=ranker,
-        top_k=5
+    # # milvus 混合检索
+    # # BM25 tokenizer 可能不支持中文！！TODO
+    # milvus_retriever = MilvusHybridRetriever(
+    #     document_store=milvus_document_store,
+    #     top_k=10, 
+    #     reranker=None,
+    #     # filters={   # Do Metadata Filtering
+    #     #     "operator": "AND",
+    #     #     "conditions": [
+    #     #         {"field": "meta.answer[0].ota_version", "operator": ">", "value": 1.21},
+    #     #         {"field": "meta.valid_time", "operator": ">", "value": datetime(2023, 11, 7)},
+    #     #     ],
+    #     # },
+    # )
+    # candidate_docs = milvus_retriever.run(
+    #     query_embedding=query_embedding,
+    #     query_text=query, 
+    # )["documents"]
+
+    # 
+
+    # 语义检索
+    milvus_retriever = MilvusEmbeddingRetriever(document_store=milvus_document_store, top_k=5)
+    semantic_hit = milvus_retriever.run(query_embedding=query_embedding)["documents"]
+
+    # 字面检索
+    milvus_retriever = MilvusSparseEmbeddingRetriever(document_store=milvus_document_store, top_k=5)
+    sparse_hit = milvus_retriever.run(query_text=query)["documents"]
+
+    # 策略合并: 拼接+去重
+    from uniqa.components.rankers import DocumentJoiner
+    doc_joiner = DocumentJoiner(
+        join_mode="concatenate",     # 融合方式(concatenate / merge / reciprocal_rank_fusion / distribution_based_rank_fusion)
+        top_k=10,
+        sort_by_score=True
     )
-    candidate_docs = milvus_retriever.run(
-        query_embedding=query_embedding,
-        query_text=query, 
-    )["documents"]
-    # print(candidate_docs)
+    candidate_docs = doc_joiner.run(documents=[semantic_hit, sparse_hit])["documents"]
+    # print([x.content for x in candidate_docs])
 
-    # # 文档写入 DocumentStore
-    # docs_with_embeddings = doc_embedder.run(docs)["documents"]
-    # writer.run(docs_with_embeddings)    # 同 doc_store.write_documents(docs_with_embeddings)
-    # filled_document_store = writer.document_store
-    # # print(filled_document_store.count_documents())  # 68
-    # # filled_document_store.save_to_disk("./test/documents.json")
+    # 重排序
+    candidate_docs_rank = ranker.run(query=query, documents=candidate_docs, top_k=10)["documents"]
 
-    # # 向量检索
-    # vector_retriever = InMemoryEmbeddingRetriever(document_store=filled_document_store)
-    # candidate_docs = vector_retriever.run(query_embedding=query_embedding, scale_score=True)["documents"]
-    # print(candidate_docs)
+    # 策略合并: 加权融合
+    from uniqa.components.rankers import DocumentJoiner
+    doc_joiner = DocumentJoiner(
+        join_mode="merge",     # 融合方式(concatenate / merge / reciprocal_rank_fusion / distribution_based_rank_fusion)
+        weights=[0.8, 0.2],    # (ranked, embedded)
+        top_k=5,
+        sort_by_score=True
+    )
+    candidate_docs = doc_joiner.run(documents=[candidate_docs_rank, semantic_hit])["documents"]
+    # print([x.content for x in candidate_docs])
 
     # Define a Template Prompt
     template = [
