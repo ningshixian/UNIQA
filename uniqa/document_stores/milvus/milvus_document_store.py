@@ -2,7 +2,7 @@
 import importlib
 import logging
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Literal, Optional, Tuple, Union
 from enum import Enum
 
 from uniqa import logging
@@ -388,10 +388,19 @@ class MilvusDocumentStore:
         :return: Number of documents written.
         """
 
-        documents_cp = [MilvusDocumentStore._discard_invalid_meta(doc) for doc in deepcopy(documents)]
-        if len(documents_cp) > 0 and not isinstance(documents_cp[0], Document):
-            err_msg = "param 'documents' must contain a list of objects of type Document"
-            raise ValueError(err_msg)
+        # documents_cp = [MilvusDocumentStore._discard_invalid_meta(doc) for doc in deepcopy(documents)]
+        # if len(documents_cp) > 0 and not isinstance(documents_cp[0], Document):
+        #     err_msg = "param 'documents' must contain a list of objects of type Document"
+        #     raise ValueError(err_msg)
+
+        # 7.8修改，取消 meta 字段的检查
+        documents_cp = [doc for doc in deepcopy(documents)]
+        if (
+            not isinstance(documents_cp, Iterable)
+            or isinstance(documents_cp, str)
+            or any(not isinstance(doc, Document) for doc in documents_cp)
+        ):
+            raise ValueError("Please provide a list of Documents.")
 
         if policy not in [DuplicatePolicy.NONE]:
             logger.warning(

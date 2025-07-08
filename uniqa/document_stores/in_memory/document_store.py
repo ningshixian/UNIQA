@@ -548,7 +548,15 @@ class InMemoryDocumentStore:
         return_documents = []
         for doc, score in results:
             if scale_score:
+                # 将 BM25 分数除以一个固定值
                 score = expit(score / BM25_SCALING_FACTOR)
+
+                # # 应用最小-最大标准化
+                # # np.ptp(scores) 计算 max(scores) - min(scores)
+                # range_val = np.ptp(score)
+                # if range_val == 0: return score
+                # min_val = np.min(score)
+                # score = (score - min_val) / range_val
 
             if not negatives_are_valid and score <= 0.0:
                 continue

@@ -20,6 +20,8 @@ _import_structure = {
     "misc": ["expit", "expand_page_range"],
     "requests_utils": ["request_with_retry", "async_request_with_retry"],
     # "type_serialization": ["deserialize_type", "serialize_type"],
+    "vecs_whitening": ["VecsWhitening"], 
+
 }
 
 if TYPE_CHECKING:
@@ -48,5 +50,7 @@ if TYPE_CHECKING:
     from .requests_utils import request_with_retry as request_with_retry
     # from .type_serialization import deserialize_type as deserialize_type
     # from .type_serialization import serialize_type as serialize_type
+    from .vecs_whitening import VecsWhitening
+
 else:
     sys.modules[__name__] = LazyImporter(name=__name__, module_file=__file__, import_structure=_import_structure)

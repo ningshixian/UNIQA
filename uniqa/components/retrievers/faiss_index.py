@@ -22,7 +22,7 @@ from sklearn.preprocessing import normalize
 # # 将上一级目录添加到 sys.path
 # sys.path.append(str(parent_parent_dir))
 from uniqa.configs.config import *
-from uniqa.tools.vecs_whitening import VecsWhitening
+from uniqa.utils.vecs_whitening import VecsWhitening
 
 
 """

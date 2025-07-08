@@ -1,17 +1,3 @@
-# -*- encoding: utf-8 -*-
-"""
-########################################
-@File       :   api.py
-@CreateTime :   2024/02/04 20:31:55
-@ModifyTime :   2024/02/04 20:31:55
-@Author     :   Shixian Ning 
-@Version    :   1.0
-@Contact    :   ningshixian@lixiang.com
-@License    :   (C)Copyright 2021-2025, zxw
-@Desc       :   None
-########################################
-"""
-
 """
 # Uvicorn 为单进程的 ASGI server ，而 Gunicorn 是管理运行多个 Uvicorn ，以达到并发与并行的最好效果。
 CUDA_VISIBLE_DEVICES=3 python api.py 
@@ -44,12 +30,12 @@ import torch
 import gc
 import pandas as pd
 
-from schemas.request.faq_schema import *
-from schemas.response import response_code
+from uniqa.api.request.faq_schema import *
+from uniqa.api.response import response_code
 from uniqa.logging import logDog, log_filter
 
-from examples.faq import FAQ
-from uniqa.components.preprocessors import cleaning_func
+from uniqa.api._faq import FAQ
+from uniqa.components.preprocessors import TextCleaner
 from configs.config import *
 
 # router = APIRouter()
@@ -95,6 +81,17 @@ faq_sys = FAQ(qa_path_list)
 from uniqa.components.extractors.custom_ner import EntityExtractor
 uie = EntityExtractor()
 
+# 加载文本清理模块
+cleaner = TextCleaner(
+    convert_to_lowercase=True, 
+    remove_punctuation=True, 
+    remove_numbers=True, 
+    remove_emoji=True, 
+    http_normalization=True, 
+    phone_normalization= True, 
+    time_normalization= True
+)
+
 
 def get_onetouch_dict():
     with open(intent_path, 'r') as f:
@@ -128,10 +125,8 @@ def torch_gc():
 
 # query查询改写，比如敏感词过滤，错别字纠错，停用词过滤等
 def _text_standardize(query):
-    # # 判断文本是否包含中文字符(l7)
-    # if not jionlp.check_any_chinese_char(query):
-    #     return ""
-    query = cleaning_func.clean_text(query)
+    query = cleaner.run(texts=[query])[0]
+
     # 补充：去除文本中的异常字符、冗余字符、HTML标签、括号信息、URL、E-mail、电话号码，全角字母数字转换为半角
     query = jionlp.clean_text(
         text=query,
