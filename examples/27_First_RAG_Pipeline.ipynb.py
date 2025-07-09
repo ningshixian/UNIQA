@@ -66,6 +66,16 @@ document_splitter.warm_up()
 doc_embedder.warm_up()
 text_embedder.warm_up()
 
+from uniqa.components.rankers import SentenceTransformersSimilarityRanker
+ranker = SentenceTransformersSimilarityRanker(
+    model="cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", 
+    # model="cross-encoder/ms-marco-MiniLM-L-6-v2", 
+    # device=ComponentDevice.from_str("cpu"),  #
+    # device=ComponentDevice.resolve_device(None),
+    scale_score=True,   # 得分归一化 - sigmoid
+)
+ranker.warm_up()
+
 
 def basic_rag_pipeline(query):
 
@@ -104,6 +114,7 @@ def basic_rag_pipeline(query):
     # filled_document_store.save_to_disk("./test/documents.json")
 
     """Create the querying pipelines"""
+    # ================ InMemory ================
 
     query_embedding = text_embedder.run(query)["embedding"]
 
@@ -112,7 +123,7 @@ def basic_rag_pipeline(query):
     result1 = vector_retriever.run(query_embedding=query_embedding, scale_score=True)
     # print(result1["documents"])
 
-    # BM25检索可能不支持中文！！TODO
+    # BM25检索可能不支持中文！！已解决
     bm25_retriever = InMemoryBM25Retriever(document_store=filled_document_store, top_k=5)
     result2 = bm25_retriever.run(query=query, scale_score=True)
     # print(result2["documents"])
@@ -127,9 +138,7 @@ def basic_rag_pipeline(query):
     candidate_docs = doc_joiner.run(documents=[result1["documents"], result2["documents"]])["documents"]
 
     # 重排序
-    ranker = SentenceTransformersSimilarityRanker(top_k=5)
-    ranker.warm_up()
-    candidate_docs = ranker.run(query=query, documents=candidate_docs)["documents"]
+    candidate_docs = ranker.run(query=query, documents=candidate_docs, top_k=5)["documents"]
     # print([x.content for x in candidate_docs])
 
     # Define a Template Prompt

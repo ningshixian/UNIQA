@@ -1,4 +1,5 @@
-# https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/33_Hybrid_Retrieval.ipynb#scrollTo=mSUiizGNytwX
+# 为文档建立索引时嵌入元数据信息，以提升检索效果。
+# https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/39_Embedding_Metadata_for_Improved_Retrieval.ipynb#scrollTo=dZNwFsuFwqO-
 
 import os
 import sys
@@ -59,7 +60,9 @@ chunker = ChineseDocumentSpliter(
 doc_embedder = SentenceTransformersDocumentEmbedder(
     model="infgrad/stella-base-zh-v3-1792d", 
     meta_fields_to_embed="date",    # 
-)  # dunzhang/stella-large-zh-v3-1792d
+)
+# prefix + "\n".join(meta_values_to_embed + [doc.content or ""]) + suffix
+
 text_embedder = SentenceTransformersTextEmbedder(model="infgrad/stella-base-zh-v3-1792d")
 doc_store = InMemoryDocumentStore(bm25_algorithm="BM25Plus")
 writer = DocumentWriter(document_store=doc_store)
