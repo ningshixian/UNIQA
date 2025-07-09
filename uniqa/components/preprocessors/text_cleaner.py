@@ -33,13 +33,13 @@ class TextCleaner:
     def __init__(
         self,
         remove_regexps: Optional[List[str]] = None,
-        convert_to_lowercase: bool = False,
+        convert_to_lowercase: bool = True,
         remove_punctuation: bool = False,
         remove_numbers: bool = False,
         remove_emoji: bool = False,
-        http_normalization: bool = False,
-        phone_normalization: bool = False,
-        time_normalization: bool = False,
+        http_normalization: bool = True,
+        phone_normalization: bool = True,
+        time_normalization: bool = True,
     ):
         """
         Initializes the TextCleaner component.
