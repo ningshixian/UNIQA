@@ -1,122 +1,797 @@
 [
     {
-        "id": "KB001",
-        "standard_question": "如何注册新的用户账号？",
-        "similar_questions": [
-            "怎样创建我的新账户？",
-            "注册流程是怎样的？",
-            "我该如何开始注册？",
-            "新用户注册步骤是什么？",
+        "answerContentList": [
+            {
+                "answerContent": "要更新车辆软件，请确保车辆已连接到稳定的WiFi网络。然后在中控屏幕上进入设置 > 系统 > 软件更新，点击检查更新。如果有可用更新，按照提示完成下载和安装。整个过程大约需要30分钟，期间请勿关闭车辆电源。",
+                "answerTypeList": ["common", "central"],
+                "carLabelList": [
+                    {
+                        "labelId": "KT001",
+                        "questionId": "KBXX1",
+                        "vehicleModelId": "VM001",
+                        "vehicleModelName": "Model S",
+                        "vehicleSeriesId": "VS001",
+                        "vehicleSeriesName": "高端系列"
+                    }
+                ],
+                "highestOtaVersion": "7.1",
+                "lowestOtaVersion": "6.0",
+                "smsTypeId": 27,
+                "thirdSmsId": "TS001",
+                "validEndTime": "2035-05-15 16:09:40",
+                "validStartTime": "2025-05-15 16:09:40",
+                "status": 1
+            }
         ],
-        "answer": "您可以通过访问我们的官方网站，点击页面右上角的“注册”按钮，然后按照提示填写您的邮箱、密码等信息来创建新账号。",
-        "category": "账户管理",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 1,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "如何更新车辆软件？",
+        "questionId": "KBXX1",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KBXX1",
+                "similarId": "KBXX1_1",
+                "similarQuestion": "怎样升级车载系统？"
+            },
+            {
+                "questionId": "KBXX1",
+                "similarId": "KBXX1_2",
+                "similarQuestion": "车辆软件更新方法"
+            },
+            {
+                "questionId": "KBXX1",
+                "similarId": "KBXX1_3",
+                "similarQuestion": "如何更新OTA系统？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT004",
+        "fourCategoryDesc": "软件更新",
+        "threeCategoryCode": "KT003",
+        "threeCategoryDesc": "系统设置",
+        "twoCategoryCode": "KT002",
+        "twoCategoryDesc": "车辆控制",
+        "oneCategoryCode": "KT001",
+        "oneCategoryDesc": "基本操作",
+        "categoryAllName": "基本操作/车辆控制/系统设置/软件更新",
+        "validEndTime": "2035-05-15 16:09:40",
+        "validStartTime": "2025-05-15 16:09:40"
     },
     {
-        "id": "KB002",
-        "standard_question": "忘记密码了怎么办？",
-        "similar_questions": [
-            "我忘了我的登录密码，该如何找回？",
-            "密码丢失了，怎么重置？",
-            "如果我忘记了账户密码，有什么解决办法？",
-            "如何恢复我的账户密码？",
+        "answerContentList": [
+            {
+                "answerContent": "您可以通过访问我们的官方网站，点击页面右上角的 “注册” 按钮，然后按照提示填写您的邮箱、密码等信息来创建新账号。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT004",
+                        "questionId": "KB001",
+                        "vehicleModelId": "VM001",
+                        "vehicleModelName": "通用产品",
+                        "vehicleSeriesId": "VS001",
+                        "vehicleSeriesName": "全系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 1,
+                "thirdSmsId": "TS001",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "如果您忘记了密码，请点击登录页面的“忘记密码”链接，输入您的注册邮箱，我们会发送一封包含重置密码链接的邮件给您。",
-        "category": "账户管理",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 1,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "如何注册新的用户账号？",
+        "questionId": "KB001",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_1",
+                "similarQuestion": "怎样创建我的新账户？"
+            },
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_2",
+                "similarQuestion": "注册流程是怎样的？"
+            },
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_3",
+                "similarQuestion": "我该如何开始注册？"
+            },
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_4",
+                "similarQuestion": "新用户注册步骤是什么？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT004",
+        "fourCategoryDesc": "注册账号",
+        "threeCategoryCode": "KT003",
+        "threeCategoryDesc": "账户操作",
+        "twoCategoryCode": "KT002",
+        "twoCategoryDesc": "账户管理",
+        "oneCategoryCode": "KT001",
+        "oneCategoryDesc": "用户服务",
+        "categoryAllName": "用户服务 / 账户管理 / 账户操作 / 注册账号",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB003",
-        "standard_question": "产品支持哪些支付方式？",
-        "similar_questions": [
-            "我可以用哪些方式付款？",
-            "你们接受哪些支付手段？",
-            "有哪些可用的付款选项？",
-            "支付时有哪些选择？",
+        "answerContentList": [
+            {
+                "answerContent": "如果您忘记了密码，请点击登录页面的 “忘记密码” 链接，输入您的注册邮箱，我们会发送一封包含重置密码链接的邮件给您。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT008",
+                        "questionId": "KB002",
+                        "vehicleModelId": "VM001",
+                        "vehicleModelName": "通用产品",
+                        "vehicleSeriesId": "VS001",
+                        "vehicleSeriesName": "全系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 2,
+                "thirdSmsId": "TS002",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "我们目前支持支付宝、微信支付和主流银行卡（借记卡/信用卡）支付。",
-        "category": "支付与订单",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 2,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "忘记密码了怎么办？",
+        "questionId": "KB002",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB002",
+                "similarId": "KB002_1",
+                "similarQuestion": "我忘了我的登录密码，该如何找回？"
+            },
+            {
+                "questionId": "KB002",
+                "similarId": "KB002_2",
+                "similarQuestion": "密码丢失了，怎么重置？"
+            },
+            {
+                "questionId": "KB002",
+                "similarId": "KB002_3",
+                "similarQuestion": "如果我忘记了账户密码，有什么解决办法？"
+            },
+            {
+                "questionId": "KB002",
+                "similarId": "KB002_4",
+                "similarQuestion": "如何恢复我的账户密码？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT008",
+        "fourCategoryDesc": "密码找回",
+        "threeCategoryCode": "KT003",
+        "threeCategoryDesc": "账户操作",
+        "twoCategoryCode": "KT002",
+        "twoCategoryDesc": "账户管理",
+        "oneCategoryCode": "KT001",
+        "oneCategoryDesc": "用户服务",
+        "categoryAllName": "用户服务 / 账户管理 / 账户操作 / 密码找回",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB004",
-        "standard_question": "订单发货需要多长时间？",
-        "similar_questions": [
-            "我的订单多久能发货？",
-            "发货周期是多久？",
-            "从下单到发货大概要等多久？",
-            "订单处理和发货时间？",
+        "answerContentList": [
+            {
+                "answerContent": "我们目前支持支付宝、微信支付和主流银行卡（借记卡 / 信用卡）支付。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT012",
+                        "questionId": "KB003",
+                        "vehicleModelId": "VM002",
+                        "vehicleModelName": "交易类产品",
+                        "vehicleSeriesId": "VS002",
+                        "vehicleSeriesName": "支付系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 3,
+                "thirdSmsId": "TS003",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "通常情况下，订单会在您付款成功后的1-3个工作日内发货。节假日可能会有所延迟。",
-        "category": "支付与订单",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 3,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "产品支持哪些支付方式？",
+        "questionId": "KB003",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB003",
+                "similarId": "KB003_1",
+                "similarQuestion": "我可以用哪些方式付款？"
+            },
+            {
+                "questionId": "KB003",
+                "similarId": "KB003_2",
+                "similarQuestion": "你们接受哪些支付手段？"
+            },
+            {
+                "questionId": "KB003",
+                "similarId": "KB003_3",
+                "similarQuestion": "有哪些可用的付款选项？"
+            },
+            {
+                "questionId": "KB003",
+                "similarId": "KB003_4",
+                "similarQuestion": "支付时有哪些选择？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT012",
+        "fourCategoryDesc": "支付方式",
+        "threeCategoryCode": "KT011",
+        "threeCategoryDesc": "支付操作",
+        "twoCategoryCode": "KT010",
+        "twoCategoryDesc": "支付与订单",
+        "oneCategoryCode": "KT009",
+        "oneCategoryDesc": "交易服务",
+        "categoryAllName": "交易服务 / 支付与订单 / 支付操作 / 支付方式",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB005",
-        "standard_question": "如何申请退货或退款？",
-        "similar_questions": [
-            "我想退货，流程是什么？",
-            "怎么办理退款手续？",
-            "退货退款的具体步骤？",
-            "如果我对商品不满意，可以退款吗？",
+        "answerContentList": [
+            {
+                "answerContent": "通常情况下，订单会在您付款成功后的 1-3 个工作日内发货。节假日可能会有所延迟。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT016",
+                        "questionId": "KB004",
+                        "vehicleModelId": "VM002",
+                        "vehicleModelName": "交易类产品",
+                        "vehicleSeriesId": "VS002",
+                        "vehicleSeriesName": "支付系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 4,
+                "thirdSmsId": "TS004",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "请登录您的账户，在“我的订单”中找到对应订单，点击“申请退货/退款”按钮，并按照指引提交申请。我们的客服会在2个工作日内处理。",
-        "category": "售后服务",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 4,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "订单发货需要多长时间？",
+        "questionId": "KB004",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB004",
+                "similarId": "KB004_1",
+                "similarQuestion": "我的订单多久能发货？"
+            },
+            {
+                "questionId": "KB004",
+                "similarId": "KB004_2",
+                "similarQuestion": "发货周期是多久？"
+            },
+            {
+                "questionId": "KB004",
+                "similarId": "KB004_3",
+                "similarQuestion": "从下单到发货大概要等多久？"
+            },
+            {
+                "questionId": "KB004",
+                "similarId": "KB004_4",
+                "similarQuestion": "订单处理和发货时间？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT016",
+        "fourCategoryDesc": "发货时效",
+        "threeCategoryCode": "KT015",
+        "threeCategoryDesc": "订单处理",
+        "twoCategoryCode": "KT010",
+        "twoCategoryDesc": "支付与订单",
+        "oneCategoryCode": "KT009",
+        "oneCategoryDesc": "交易服务",
+        "categoryAllName": "交易服务 / 支付与订单 / 订单处理 / 发货时效",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB006",
-        "standard_question": "你们的客服工作时间是？",
-        "similar_questions": [
-            "客服什么时候在线？",
-            "我可以在什么时间联系到客服？",
-            "客服团队的服务时间？",
-            "客服热线的工作时间？",
+        "answerContentList": [
+            {
+                "answerContent": "请登录您的账户，在 “我的订单” 中找到对应订单，点击 “申请退货 / 退款” 按钮，并按照指引提交申请。我们的客服会在 2 个工作日内处理。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT020",
+                        "questionId": "KB005",
+                        "vehicleModelId": "VM003",
+                        "vehicleModelName": "售后类产品",
+                        "vehicleSeriesId": "VS003",
+                        "vehicleSeriesName": "服务系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 5,
+                "thirdSmsId": "TS005",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "我们的在线客服工作时间为周一至周五，上午9:00至下午6:00（北京时间）。",
-        "category": "客户服务",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 5,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "如何申请退货或退款？",
+        "questionId": "KB005",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB005",
+                "similarId": "KB005_1",
+                "similarQuestion": "我想退货，流程是什么？"
+            },
+            {
+                "questionId": "KB005",
+                "similarId": "KB005_2",
+                "similarQuestion": "怎么办理退款手续？"
+            },
+            {
+                "questionId": "KB005",
+                "similarId": "KB005_3",
+                "similarQuestion": "退货退款的具体步骤？"
+            },
+            {
+                "questionId": "KB005",
+                "similarId": "KB005_4",
+                "similarQuestion": "如果我对商品不满意，可以退款吗？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT020",
+        "fourCategoryDesc": "退货退款",
+        "threeCategoryCode": "KT019",
+        "threeCategoryDesc": "售后处理",
+        "twoCategoryCode": "KT018",
+        "twoCategoryDesc": "售后服务",
+        "oneCategoryCode": "KT017",
+        "oneCategoryDesc": "客户保障",
+        "categoryAllName": "客户保障 / 售后服务 / 售后处理 / 退货退款",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB007",
-        "standard_question": "产品保修期是多久？",
-        "similar_questions": [
-            "这个商品的质保期是多长？",
-            "产品有几年保修？",
-            "保修政策是怎样的？",
-            "质保期限是多久？",
+        "answerContentList": [
+            {
+                "answerContent": "我们的在线客服工作时间为周一至周五，上午 9:00 至下午 6:00（北京时间）。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT024",
+                        "questionId": "KB006",
+                        "vehicleModelId": "VM004",
+                        "vehicleModelName": "服务类产品",
+                        "vehicleSeriesId": "VS004",
+                        "vehicleSeriesName": "客服系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 6,
+                "thirdSmsId": "TS006",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "本产品提供1年免费保修服务，具体条款请参考产品说明书或官网保修政策页面。",
-        "category": "产品信息",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 6,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "你们的客服工作时间是？",
+        "questionId": "KB006",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB006",
+                "similarId": "KB006_1",
+                "similarQuestion": "客服什么时候在线？"
+            },
+            {
+                "questionId": "KB006",
+                "similarId": "KB006_2",
+                "similarQuestion": "我可以在什么时间联系到客服？"
+            },
+            {
+                "questionId": "KB006",
+                "similarId": "KB006_3",
+                "similarQuestion": "客服团队的服务时间？"
+            },
+            {
+                "questionId": "KB006",
+                "similarId": "KB006_4",
+                "similarQuestion": "客服热线的工作时间？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT024",
+        "fourCategoryDesc": "客服时效",
+        "threeCategoryCode": "KT023",
+        "threeCategoryDesc": "客服服务",
+        "twoCategoryCode": "KT022",
+        "twoCategoryDesc": "客户服务",
+        "oneCategoryCode": "KT021",
+        "oneCategoryDesc": "服务支持",
+        "categoryAllName": "服务支持 / 客户服务 / 客服服务 / 客服时效",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB008",
-        "standard_question": "如何更新我的个人资料？",
-        "similar_questions": [
-            "怎样修改我的账户信息？",
-            "我想更改我的个人信息，怎么操作？",
-            "更新个人档案的步骤？",
-            "在哪里可以编辑我的资料？",
+        "answerContentList": [
+            {
+                "answerContent": "本产品提供 1 年免费保修服务，具体条款请参考产品说明书或官网保修政策页面。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT028",
+                        "questionId": "KB007",
+                        "vehicleModelId": "VM005",
+                        "vehicleModelName": "实体产品",
+                        "vehicleSeriesId": "VS005",
+                        "vehicleSeriesName": "硬件系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 7,
+                "thirdSmsId": "TS007",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "登录后，点击页面顶部的头像或用户名，进入“个人中心”，即可修改您的个人资料，如昵称、收货地址等。",
-        "category": "账户管理",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 7,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "产品保修期是多久？",
+        "questionId": "KB007",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB007",
+                "similarId": "KB007_1",
+                "similarQuestion": "这个商品的质保期是多长？"
+            },
+            {
+                "questionId": "KB007",
+                "similarId": "KB007_2",
+                "similarQuestion": "产品有几年保修？"
+            },
+            {
+                "questionId": "KB007",
+                "similarId": "KB007_3",
+                "similarQuestion": "保修政策是怎样的？"
+            },
+            {
+                "questionId": "KB007",
+                "similarId": "KB007_4",
+                "similarQuestion": "质保期限是多久？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT028",
+        "fourCategoryDesc": "保修期限",
+        "threeCategoryCode": "KT027",
+        "threeCategoryDesc": "产品保障",
+        "twoCategoryCode": "KT026",
+        "twoCategoryDesc": "产品信息",
+        "oneCategoryCode": "KT025",
+        "oneCategoryDesc": "产品说明",
+        "categoryAllName": "产品说明 / 产品信息 / 产品保障 / 保修期限",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB009",
-        "standard_question": "支持哪些操作系统？",
-        "similar_questions": [
-            "这个软件兼容哪些系统？",
-            "可以在什么操作系统上运行？",
-            "对操作系统的要求是什么？",
-            "支持的平台有哪些？",
+        "answerContentList": [
+            {
+                "answerContent": "登录后，点击页面顶部的头像或用户名，进入 “个人中心”，即可修改您的个人资料，如昵称、收货地址等。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT032",
+                        "questionId": "KB008",
+                        "vehicleModelId": "VM001",
+                        "vehicleModelName": "通用产品",
+                        "vehicleSeriesId": "VS001",
+                        "vehicleSeriesName": "全系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 8,
+                "thirdSmsId": "TS008",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "我们的软件支持Windows 10及以上版本、macOS 10.15及以上版本，以及主流Linux发行版。",
-        "category": "技术支持",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 8,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "如何更新我的个人资料？",
+        "questionId": "KB008",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB008",
+                "similarId": "KB008_1",
+                "similarQuestion": "怎样修改我的账户信息？"
+            },
+            {
+                "questionId": "KB008",
+                "similarId": "KB008_2",
+                "similarQuestion": "我想更改我的个人信息，怎么操作？"
+            },
+            {
+                "questionId": "KB008",
+                "similarId": "KB008_3",
+                "similarQuestion": "更新个人档案的步骤？"
+            },
+            {
+                "questionId": "KB008",
+                "similarId": "KB008_4",
+                "similarQuestion": "在哪里可以编辑我的资料？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT032",
+        "fourCategoryDesc": "资料更新",
+        "threeCategoryCode": "KT03",
+        "threeCategoryDesc": "账户操作",
+        "twoCategoryCode": "KT002",
+        "twoCategoryDesc": "账户管理",
+        "oneCategoryCode": "KT001",
+        "oneCategoryDesc": "用户服务",
+        "categoryAllName": "用户服务 / 账户管理 / 账户操作 / 资料更新",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
     {
-        "id": "KB010",
-        "standard_question": "如何联系技术支持？",
-        "similar_questions": [
-            "遇到技术问题该找谁？",
-            "技术故障如何寻求帮助？",
-            "技术支持的联系方式？",
-            "我需要技术援助，怎么联系你们？",
+        "answerContentList": [
+            {
+                "answerContent": "我们的软件支持 Windows 10 及以上版本、macOS 10.15 及以上版本，以及主流 Linux 发行版。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT036",
+                        "questionId": "KB009",
+                        "vehicleModelId": "VM006",
+                        "vehicleModelName": "软件类产品",
+                        "vehicleSeriesId": "VS006",
+                        "vehicleSeriesName": "软件系列"
+                    }
+                ],
+                "highestOtaVersion": "10.0",
+                "lowestOtaVersion": "6.0",
+                "smsTypeId": 9,
+                "thirdSmsId": "TS009",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
         ],
-        "answer": "您可以通过官网的技术支持页面提交工单，或发送邮件至support@example.com，我们的技术团队会尽快回复。",
-        "category": "技术支持",
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 9,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "支持哪些操作系统？",
+        "questionId": "KB009",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB009",
+                "similarId": "KB009_1",
+                "similarQuestion": "这个软件兼容哪些系统？"
+            },
+            {
+                "questionId": "KB009",
+                "similarId": "KB009_2",
+                "similarQuestion": "可以在什么操作系统上运行？"
+            },
+            {
+                "questionId": "KB009",
+                "similarId": "KB009_3",
+                "similarQuestion": "对操作系统的要求是什么？"
+            },
+            {
+                "questionId": "KB009",
+                "similarId": "KB009_4",
+                "similarQuestion": "支持的平台有哪些？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT036",
+        "fourCategoryDesc": "系统兼容",
+        "threeCategoryCode": "KT035",
+        "threeCategoryDesc": "技术参数",
+        "twoCategoryCode": "KT034",
+        "twoCategoryDesc": "技术支持",
+        "oneCategoryCode": "KT033",
+        "oneCategoryDesc": "技术服务",
+        "categoryAllName": "技术服务 / 技术支持 / 技术参数 / 系统兼容",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
     },
+    {
+        "answerContentList": [
+            {
+                "answerContent": "您可以通过官网的技术支持页面提交工单，或发送邮件至 support@example.com，我们的技术团队会尽快回复。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT040",
+                        "questionId": "KB010",
+                        "vehicleModelId": "VM006",
+                        "vehicleModelName": "软件类产品",
+                        "vehicleSeriesId": "VS006",
+                        "vehicleSeriesName": "软件系列"
+                    }
+                ],
+                "highestOtaVersion": "10.0",
+                "lowestOtaVersion": "6.0",
+                "smsTypeId": 10,
+                "thirdSmsId": "TS010",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
+        ],
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 10,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "如何联系技术支持？",
+        "questionId": "KB010",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB010",
+                "similarId": "KB010_1",
+                "similarQuestion": "遇到技术问题该找谁？"
+            },
+            {
+                "questionId": "KB010",
+                "similarId": "KB010_2",
+                "similarQuestion": "技术故障如何寻求帮助？"
+            },
+            {
+                "questionId": "KB010",
+                "similarId": "KB010_3",
+                "similarQuestion": "技术支持的联系方式？"
+            },
+            {
+                "questionId": "KB010",
+                "similarId": "KB010_4",
+                "similarQuestion": "我需要技术援助，怎么联系你们？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT040",
+        "fourCategoryDesc": "技术联系",
+        "threeCategoryCode": "KT039",
+        "threeCategoryDesc": "支持渠道",
+        "twoCategoryCode": "KT034",
+        "twoCategoryDesc": "技术支持",
+        "oneCategoryCode": "KT033",
+        "oneCategoryDesc": "技术服务",
+        "categoryAllName": "技术服务 / 技术支持 / 支持渠道 / 技术联系",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
+    }
 ]

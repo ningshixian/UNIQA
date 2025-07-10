@@ -1,0 +1,145 @@
+[
+    {
+        "answerContentList": [
+            {
+                "answerContent": "[已更新] 要更新车辆软件，请确保车辆已连接到稳定的WiFi网络。然后在中控屏幕上进入设置 > 系统 > 软件更新，点击检查更新。如果有可用更新，按照提示完成下载和安装。整个过程大约需要30分钟，期间请勿关闭车辆电源。",
+                "answerTypeList": ["common", "central"],
+                "carLabelList": [
+                    {
+                        "labelId": "KT001",
+                        "questionId": "KBXX1",
+                        "vehicleModelId": "VM001",
+                        "vehicleModelName": "Model S",
+                        "vehicleSeriesId": "VS001",
+                        "vehicleSeriesName": "高端系列"
+                    }
+                ],
+                "highestOtaVersion": "7.1",
+                "lowestOtaVersion": "6.0",
+                "smsTypeId": 27,
+                "thirdSmsId": "TS001",
+                "validEndTime": "2035-05-15 16:09:40",
+                "validStartTime": "2025-05-15 16:09:40",
+                "status": 1
+            }
+        ],
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 1,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "如何更新车辆软件？",
+        "questionId": "KBXX1",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KBXX1",
+                "similarId": "KBXX1_1",
+                "similarQuestion": "怎样升级车载系统？"
+            },
+            {
+                "questionId": "KBXX1",
+                "similarId": "KBXX1_2",
+                "similarQuestion": "车辆软件更新方法"
+            },
+            {
+                "questionId": "KBXX1",
+                "similarId": "KBXX1_3",
+                "similarQuestion": "如何更新OTA系统？"
+            },
+            {
+                "questionId": "KBXX1",
+                "similarId": "KBXX1_4",
+                "similarQuestion": "[新增相似问] 手动升级OTA软件？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT004",
+        "fourCategoryDesc": "软件更新",
+        "threeCategoryCode": "KT003",
+        "threeCategoryDesc": "系统设置",
+        "twoCategoryCode": "KT002",
+        "twoCategoryDesc": "车辆控制",
+        "oneCategoryCode": "KT001",
+        "oneCategoryDesc": "基本操作",
+        "categoryAllName": "基本操作/车辆控制/系统设置/软件更新",
+        "validEndTime": "2035-05-15 16:09:40",
+        "validStartTime": "2025-05-15 16:09:40"
+    },
+    {
+        "answerContentList": [
+            {
+                "answerContent": "您可以通过访问我们的官方网站，点击页面右上角的 “注册” 按钮，然后按照提示填写您的邮箱、密码等信息来创建新账号。",
+                "answerTypeList": [
+                    "common",
+                    "central"
+                ],
+                "carLabelList": [
+                    {
+                        "labelId": "KT004",
+                        "questionId": "KB001",
+                        "vehicleModelId": "VM001",
+                        "vehicleModelName": "通用产品",
+                        "vehicleSeriesId": "VS001",
+                        "vehicleSeriesName": "全系列"
+                    }
+                ],
+                "highestOtaVersion": "",
+                "lowestOtaVersion": "",
+                "smsTypeId": 1,
+                "thirdSmsId": "TS001",
+                "validEndTime": "2035-07-09 10:00:00",
+                "validStartTime": "2025-07-09 10:00:00",
+                "status": 1
+            }
+        ],
+        "createUser": "10001",
+        "createUserName": "张三",
+        "updateUser": "10002",
+        "updateUserName": "李四",
+        "id": 1,
+        "longEffective": 1,
+        "overhead": 0,
+        "questionContent": "[已更新] 如何注册新的用户账号？",
+        "questionId": "KB001",
+        "questionType": 0,
+        "signType": "1",
+        "similarQuestionList": [
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_1",
+                "similarQuestion": "怎样创建我的新账户？"
+            },
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_2",
+                "similarQuestion": "注册流程是怎样的？"
+            },
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_3",
+                "similarQuestion": "我该如何开始注册？"
+            },
+            {
+                "questionId": "KB001",
+                "similarId": "KB001_4",
+                "similarQuestion": "新用户注册步骤是什么？"
+            }
+        ],
+        "status": 1,
+        "fourCategoryCode": "KT004",
+        "fourCategoryDesc": "注册账号",
+        "threeCategoryCode": "KT003",
+        "threeCategoryDesc": "账户操作",
+        "twoCategoryCode": "KT002",
+        "twoCategoryDesc": "账户管理",
+        "oneCategoryCode": "KT001",
+        "oneCategoryDesc": "用户服务",
+        "categoryAllName": "用户服务 / 账户管理 / 账户操作 / 注册账号",
+        "validEndTime": "2035-07-09 10:00:00",
+        "validStartTime": "2025-07-09 10:00:00"
+    }
+]
