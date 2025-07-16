@@ -314,7 +314,7 @@ class FAQPipeline:
 
     def _match_conditions(self, answer: Dict[str, Any], user_conditions: Dict[str, Any]) -> float:
         """计算答案与用户条件的匹配度（0~1），用于 Metadata Filtering 无法处理的复杂筛选逻辑。
-        answer新增is_default_answer字段。如果一个答案没有车型标签、生效时间、最高/最低ota版本，就认为是默认答案。
+        answer新增is_default_answer字段。如果一个答案没有(车型标签、生效时间、最高/最低ota版本)，就认为是默认答案。
 
         Args:
             answer (Dict[str, Any]): 包含答案信息的字典，====》candidate_docs[*].meta["answers"][*]

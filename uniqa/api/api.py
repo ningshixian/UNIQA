@@ -5,9 +5,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.getcwd())
 sys.path.append(os.path.abspath('.'))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import status
 from fastapi.responses import JSONResponse, Response
+from fastapi.responses import StreamingResponse
 from fastapi import APIRouter, Depends, File, UploadFile, Query
 
 import re
@@ -17,7 +19,6 @@ import traceback
 from pydantic import BaseModel, validator
 from starlette.requests import Request
 from starlette.testclient import TestClient
-import uvicorn
 import asyncio
 from typing import List, Dict, Optional, Any
 from collections import OrderedDict
@@ -41,6 +42,15 @@ nohup gunicorn uniqa.api.api:router -c configs/gunicorn_config_api.py > logs/api
 """
 
 app = FastAPI(title="FAQ API")
+
+# 添加CORS中间件（允许所有来源测试）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允许所有来源
+    allow_credentials=True,  # 允许携带凭证
+    allow_methods=["*"],  # 允许所有HTTP方法
+    allow_headers=["*"],  # 允许所有请求头
+)
 
 # 初始化组件
 preprocessor = DataPreprocessor()
@@ -100,6 +110,23 @@ def torch_gc():
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the FAQ API"}
+
+
+# @app.post("/rag-stream")
+# async def rag_stream(request: Request):
+#     data = await request.json()
+#     query = data.get("query", "")
+
+#     from uniqa.api.rag_async import generate_stream
+#     # 创建一个 StreamingResponse 实例，用于处理流式响应
+#     return StreamingResponse(
+#         generate_stream(query),     # 流式生成器
+#         media_type="text/event-stream",
+#         headers={
+#             "Cache-Control": "no-cache",
+#             "X-Accel-Buffering": "no"
+#         }
+#     )
 
 
 @app.post("/search")
@@ -224,18 +251,19 @@ def incremental_update(request: Request):
     统一通过 write_documents 和 delete_documents 实现增删改，而无需每次都重新索引所有数据。
     """
     try:
-        # 获取 Milvus 中所有文档的 id 和 meta
-        # 注意：对于非常大的数据集，一次性获取所有文档可能效率不高。
-        # 更好的方法是分批获取或使用更高级的同步策略（见后文）。
-        # 这里为了演示，我们获取全部。
-        milvus_docs = faq.milvus_document_store.filter_documents()
-        milvus_data_map = {doc.id: doc.meta for doc in milvus_docs}
+        # # 获取 Milvus 中所有文档的 id 和 meta
+        # # 注意：对于非常大的数据集，一次性获取所有文档可能效率不高。
+        # # 更好的方法是分批获取或使用更高级的同步策略（见后文）。
+        # # 这里为了演示，我们获取全部。
+        # milvus_docs = faq.milvus_document_store.filter_documents()
+        # milvus_data_map = {doc.id: doc.meta for doc in milvus_docs}
 
         # --- 3. 更新和添加 (UPDATE & ADD) ---
         print("\n--- 3. 更新和添加 (UPDATE & ADD) ---")
 
         # 模拟数据更新：答案内容变了，并且增加了一个新的相似问题
-        update_and_add_docs = preprocessor.load_data("uniqa/data/demo2.json")
+        # update_and_add_docs = preprocessor.load_data("uniqa/data/update_robot_know_sim.json")     # 2
+        update_and_add_docs = preprocessor.load_data("uniqa/data/update_robot_know.json")           # 1
         print(f"从更新后的 JSON 生成了 {len(update_and_add_docs)} 个 Haystack Document:")
         for doc in update_and_add_docs:
             print(f"  - ID: {doc.id}, Content: '{doc.content}'")
@@ -243,8 +271,9 @@ def incremental_update(request: Request):
         # 嵌入并使用 OVERWRITE 策略写入
         from uniqa.document_stores.types import DuplicatePolicy
         embedded_update_docs = faq.doc_embedder.run(documents=update_and_add_docs)["documents"]
-        # update_documents
-        count = faq.milvus_document_store.write_documents(
+        # old: MilvusDocumentStore.write_documents
+        # new: MilvusDocumentStore.update_documents
+        count = faq.milvus_document_store.update_documents(
             embedded_update_docs,
             policy=DuplicatePolicy.OVERWRITE
         )
@@ -280,134 +309,12 @@ def incremental_update(request: Request):
         return {'status': False, 'msg': error_msg}
 
 
-# =========================== #
-
-
-@app.get("/update_faq_know/{item_id}")
-def update_faq_know(item_id: int):
-    """
-    增量更新FAQ知识库
-    Args:
-        item_id (int): 更新类型 - 1: 标准问增量更新, 2: 相似问增量更新
-    """
-    try:
-        file_path = None
-        if item_id == 1:
-            # 知识标准问增量同步存储
-            file_path = './data_factory/update_robot_know.csv'
-        elif item_id == 2:
-            # 相似问增量同步存储
-            file_path = './data_factory/update_robot_know_sim.csv'
-        else:
-            error_msg = 'Invalid item_id, must be 1 or 2'
-            logDog.error(error_msg)
-            return {'status': False, 'msg': error_msg}
-        
-        logDog.info(f"开始 know={item_id} 知识增量更新")
-        
-        # 读取CSV文件
-        # 空值都是默认为 NAN，设置 keep_default_na=False 让读取出来的空值是空字符串
-        df = pd.read_csv(file_path, encoding="utf-8", keep_default_na=False)
-
-        if df.empty:
-            logDog.info(f"文件 {file_path} 为空，无需更新")
-            return {'status': True, 'msg': 'No data to update'}
-
-        # 收集新句子
-        new_sentences = []
-        new_qid_dict = {}
-        new_sen2qid = OrderedDict()
-
-        # 处理标准问更新
-        if item_id==1:
-            for i,row in df.iterrows():
-                question_id = row["question_id"]
-                question_content = row["question_content"]
-                answer_content = row["answer_content"]
-                car_type = row["car_type"]
-
-                # 获取现有相似问（如果有）
-                similar_sentence = faq_sys.recall_module.faiss.qid_dict.get(
-                    question_id, {}).get("similar_sentence", [])
-
-                # 更新问题-答案字典
-                new_qid_dict[question_id] = {
-                    'standard_sentence': question_content,
-                    'similar_sentence': similar_sentence,
-                    'answer': answer_content,
-                    'source': "知识库",
-                    'car_type': car_type
-                }
-                # 更新问题-ID映射和句子列表
-                new_sen2qid[question_content] = question_id
-                new_sentences.append(question_content)
-
-        # 处理相似问更新
-        if item_id==2:
-            for i, row in df.iterrows():
-                question_id = row["question_id"]
-                similar_question = row["similar_question"]
-                # 检查question_id是否在现有词典中
-                if question_id not in faq_sys.recall_module.faiss.qid_dict:
-                    logDog.warning(f"标准问ID {question_id} 不存在，相似问 '{similar_question}' 将使用占位标准问")
-                        
-                # 获取现有数据
-                question_content = faq_sys.recall_module.faiss.qid_dict.get(
-                    question_id, {}).get("standard_sentence", "标准问插入延迟")
-                similar_sentence = faq_sys.recall_module.faiss.qid_dict.get(
-                    question_id, {}).get("similar_sentence", []).copy()  # 创建副本以避免修改原始数据
-                answer_content = faq_sys.recall_module.faiss.qid_dict.get(
-                    question_id, {}).get("answer_content", "")
-                car_type = faq_sys.recall_module.faiss.qid_dict.get(
-                    question_id, {}).get("car_type", "")
-                
-                # 添加新的相似问
-                similar_sentence.append(similar_question)
-
-                # 更新问题-答案字典
-                new_qid_dict[question_id] = {
-                    'standard_sentence': question_content,
-                    'similar_sentence': similar_sentence,
-                    'answer': answer_content,
-                    'source': "知识库",
-                    'car_type': car_type
-                }
-                # 更新问题-ID映射和句子列表
-                new_sen2qid[similar_question] = question_id
-                new_sentences.append(similar_question)
-
-        # 如果有新句子需要添加到当前索引
-        if new_sentences:
-            logDog.info(f"添加 {len(new_sentences)} 条新句子到索引")
-            # 更新词典和映射
-            faq_sys.recall_module.faiss.qid_dict.update(new_qid_dict)
-            faq_sys.recall_module.faiss.sen2qid.update(new_sen2qid)
-            faq_sys.recall_module.faiss.sentences.extend(new_sentences)
-            # 生成并添加新向量
-            new_vecs = faq_sys.recall_module.faiss.get_vecs(new_sentences)
-            new_vecs = faq_sys.recall_module.faiss.__tofloat32__(new_vecs)
-            faq_sys.recall_module.faiss.index.add(new_vecs)
-
-            # 更新全局变量
-            global global_sentences, global_qid_dict, global_sen2qid
-            global_sentences.extend(new_sentences)
-            global_qid_dict.update(new_qid_dict)
-            global_sen2qid.update(new_sen2qid)
-
-        torch_gc()  # 随着更新次数增多，显存占用会变大，所以顶一个 torch_gc() 方法完成对显存的回收
-
-        logDog.info(f"know={item_id} 知识增量更新成功\n")
-        return {'status': True, 'msg': f'Successfully updated {len(new_sentences)} entries'}
-    except Exception as e:
-        error_msg = f"【update_faq_know接口】know={item_id} 增量更新索引时发生错误: {str(e)}"
-        logDog.error(f"{error_msg}\n{traceback.format_exc()}")
-        return {'status': False, 'msg': error_msg}
-
-
 if __name__ == "__main__":
+    import uvicorn
     config = uvicorn.Config(
         "api:app", 
-        host='0.0.0.0', port=8091, 
+        host='0.0.0.0', 
+        port=8091, 
         workers=1, 
         # limit_concurrency=200,  # 最大并发数，默认 None
         # reload=True,

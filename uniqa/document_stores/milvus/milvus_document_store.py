@@ -393,7 +393,7 @@ class MilvusDocumentStore:
         #     err_msg = "param 'documents' must contain a list of objects of type Document"
         #     raise ValueError(err_msg)
 
-        # 7.8修改，取消 meta 字段的检查
+        # 7.8修改，取消 meta 字段的检查（否则有问题）
         documents_cp = [doc for doc in deepcopy(documents)]
         if (
             not isinstance(documents_cp, Iterable)
@@ -513,6 +513,143 @@ class MilvusDocumentStore:
                 logger.error("Failed to insert batch starting at entity: %s/%s", i, total_count)
                 raise err
         return len(wrote_ids)
+
+    def update_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
+        """
+        update documents into the store.
+
+        :param documents: A list of documents.
+        :param policy: Documents with the same ID count as duplicates.
+            MilvusStore only supports `DuplicatePolicy.NONE`
+        :return: Number of documents written.
+        """
+
+        # documents_cp = [MilvusDocumentStore._discard_invalid_meta(doc) for doc in deepcopy(documents)]
+        # if len(documents_cp) > 0 and not isinstance(documents_cp[0], Document):
+        #     err_msg = "param 'documents' must contain a list of objects of type Document"
+        #     raise ValueError(err_msg)
+
+        # 7.8修改，取消 meta 字段的检查（否则有问题）
+        documents_cp = [doc for doc in deepcopy(documents)]
+        if (
+            not isinstance(documents_cp, Iterable)
+            or isinstance(documents_cp, str)
+            or any(not isinstance(doc, Document) for doc in documents_cp)
+        ):
+            raise ValueError("Please provide a list of Documents.")
+
+        if policy not in [DuplicatePolicy.NONE]:
+            logger.warning(
+                f"MilvusStore only supports `DuplicatePolicy.NONE`, but got {policy}. "
+                "Milvus does not currently check if entity primary keys are duplicates."
+                "You are responsible for ensuring entity primary keys are unique, "
+                "and if they aren't Milvus may contain multiple entities with duplicate primary keys."
+            )
+
+        # Check embeddings
+        embedding_dim = 128
+        for doc in documents_cp:
+            if doc.embedding is not None:
+                embedding_dim = len(doc.embedding)
+                break
+        empty_embedding = False
+        empty_sparse_embedding = False
+        for doc in documents_cp:
+            if doc.embedding is None:
+                empty_embedding = True
+                dummy_vector = [self._dummy_value] * embedding_dim
+                doc.embedding = dummy_vector
+            if doc.sparse_embedding is None and self._sparse_mode == EmbeddingMode.EMBEDDING_MODEL:
+                empty_sparse_embedding = True
+                dummy_sparse_vector = SparseEmbedding(
+                    indices=[0],
+                    values=[self._dummy_value],
+                )
+                doc.sparse_embedding = dummy_sparse_vector
+            if doc.content is None:
+                doc.content = ""
+        if empty_embedding and self._sparse_vector_field is None:
+            logger.warning(
+                "Milvus is a purely vector database, but document has no embedding. "
+                "A dummy embedding will be used, but this can AFFECT THE SEARCH RESULTS!!! "
+                "Please calculate the embedding in each document first, and then write them to Milvus Store."
+            )
+        if (
+            empty_sparse_embedding
+            and self._sparse_vector_field is not None
+            and self._sparse_mode == EmbeddingMode.EMBEDDING_MODEL
+        ):
+            logger.warning(
+                "You specified `sparse_vector_field`, but document has no sparse embedding. "
+                "A dummy sparse embedding will be used, but this can AFFECT THE SEARCH RESULTS!!! "
+                "Please calculate the sparse embedding in each document first, and then write them to Milvus Store."
+            )
+
+        embeddings = [doc.embedding for doc in documents_cp]
+        sparse_embeddings = None
+        if self._sparse_mode == EmbeddingMode.EMBEDDING_MODEL:
+            sparse_embeddings = [self._convert_sparse_to_dict(doc.sparse_embedding) for doc in documents_cp]
+        metas = [doc.meta for doc in documents_cp]
+        texts = [doc.content for doc in documents_cp]
+        ids = [doc.id for doc in documents_cp]
+
+        if len(embeddings) == 0:
+            logger.debug("Nothing to insert, skipping.")
+            return 0
+
+        # If the collection hasn't been initialized yet, perform all steps to do so
+        kwargs: Dict[str, Any] = {}
+        if not isinstance(self.col, Collection):
+            kwargs = {"embeddings": embeddings, "metas": metas}
+            if self.partition_names:
+                kwargs["partition_names"] = self.partition_names
+            if self.replica_number:
+                kwargs["replica_number"] = self.replica_number
+            if self.timeout:
+                kwargs["timeout"] = self.timeout
+            self._init(**kwargs)
+
+        insert_list: list[dict] = []
+        for i in range(len(ids)):
+            entity_dict = {
+                self._text_field: texts[i],
+                self._vector_field: embeddings[i],
+                self._primary_field: ids[i],
+            }
+            if (
+                self._sparse_vector_field
+                and self._sparse_mode == EmbeddingMode.EMBEDDING_MODEL
+                and sparse_embeddings is not None
+            ):
+                entity_dict[self._sparse_vector_field] = sparse_embeddings[i]
+            if metas is not None:
+                for key, value in metas[i].items():
+                    # if not enable_dynamic_field, skip fields not in the collection.
+                    if not self.enable_dynamic_field and key not in self.fields:
+                        continue
+                    # If enable_dynamic_field, all fields are allowed.
+                    entity_dict[key] = value
+            insert_list.append(entity_dict)
+
+        total_count = len(insert_list)
+        batch_size = 1000
+        wrote_ids = []
+        if not isinstance(self.col, Collection):
+            raise MilvusException(message="Collection is not initialized")
+        for i in range(0, total_count, batch_size):
+            # Grab end index
+            end = min(i + batch_size, total_count)
+            batch_insert_list = insert_list[i:end]
+            # Insert into the collection.
+            try:
+                # res: Collection
+                res = self.col.upsert(batch_insert_list, timeout=None, **kwargs)
+                wrote_ids.extend(res.primary_keys)
+            except MilvusException as err:
+                logger.error("Failed to update batch starting at entity: %s/%s", i, total_count)
+                raise err
+        return len(wrote_ids)
+
 
     def delete_documents(self, document_ids: List[str]) -> None:
         """
