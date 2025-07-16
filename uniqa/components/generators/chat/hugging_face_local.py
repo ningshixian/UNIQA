@@ -10,17 +10,10 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager, suppress
 from typing import Any, Callable, Dict, List, Literal, Optional, Union, cast
 
+from uniqa.lazy_imports import LazyImport
 from uniqa import default_from_dict, default_to_dict, logging
 from uniqa.dataclasses import ChatMessage, ToolCall
-# from uniqa.dataclasses.streaming_chunk import select_streaming_callback
-from uniqa.lazy_imports import LazyImport
-from uniqa.tools import (
-    Tool,
-    Toolset,
-    # _check_duplicate_tool_names,
-    # deserialize_tools_or_toolset_inplace,
-    # serialize_tools_or_toolset,
-)
+
 from uniqa.utils import (
     ComponentDevice,
     # Secret,
@@ -28,6 +21,16 @@ from uniqa.utils import (
     # deserialize_secrets_inplace,
     # serialize_callable,
 )
+from uniqa.tools import (
+    Tool,
+    Toolset,
+    _check_duplicate_tool_names,
+    # deserialize_tools_or_toolset_inplace,
+    # serialize_tools_or_toolset,
+)
+
+from haystack.dataclasses import AsyncStreamingCallbackT, ComponentInfo, StreamingCallbackT
+from haystack.dataclasses import select_streaming_callback
 
 logger = logging.logDog
 
@@ -46,6 +49,8 @@ with LazyImport(message="Run 'pip install \"transformers[torch]\"'") as torch_an
         deserialize_hf_model_kwargs,
         serialize_hf_model_kwargs,
     )
+    from haystack.utils.hf import AsyncHFTokenStreamingHandler, HFTokenStreamingHandler
+    AsyncStreamingCallbackT
 
 
 PIPELINE_SUPPORTED_TASKS = ["text-generation", "text2text-generation"]
@@ -134,7 +139,7 @@ class HuggingFaceLocalChatGenerator:
         generation_kwargs: Optional[Dict[str, Any]] = None,
         huggingface_pipeline_kwargs: Optional[Dict[str, Any]] = None,
         stop_words: Optional[List[str]] = None,
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
         tools: Optional[Union[List[Tool], Toolset]] = None,
         tool_parsing_function: Optional[Callable[[str], Optional[List[ToolCall]]]] = None,
         async_executor: Optional[ThreadPoolExecutor] = None,
@@ -187,9 +192,9 @@ class HuggingFaceLocalChatGenerator:
         """
         torch_and_transformers_import.check()
 
-        # if tools and streaming_callback is not None:
-        #     raise ValueError("Using tools and streaming at the same time is not supported. Please choose one.")
-        # _check_duplicate_tool_names(list(tools or []))
+        if tools and streaming_callback is not None:
+            raise ValueError("Using tools and streaming at the same time is not supported. Please choose one.")
+        _check_duplicate_tool_names(list(tools or []))
 
         huggingface_pipeline_kwargs = huggingface_pipeline_kwargs or {}
         generation_kwargs = generation_kwargs or {}
@@ -238,7 +243,7 @@ class HuggingFaceLocalChatGenerator:
         self.huggingface_pipeline_kwargs = huggingface_pipeline_kwargs
         self.generation_kwargs = generation_kwargs
         self.chat_template = chat_template
-        # self.streaming_callback = streaming_callback
+        self.streaming_callback = streaming_callback
         self.pipeline: Optional[HfPipeline] = None
         self.tools = tools
 
@@ -334,7 +339,7 @@ class HuggingFaceLocalChatGenerator:
         self,
         messages: List[ChatMessage],
         generation_kwargs: Optional[Dict[str, Any]] = None,
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
         tools: Optional[Union[List[Tool], Toolset]] = None,
     ) -> Dict[str, List[ChatMessage]]:
         """
@@ -352,21 +357,21 @@ class HuggingFaceLocalChatGenerator:
         prepared_inputs = self._prepare_inputs(
             messages=messages, generation_kwargs=generation_kwargs, tools=tools
         )
-        # prepared_inputs = self._prepare_inputs(
-        #     messages=messages, generation_kwargs=generation_kwargs, streaming_callback=streaming_callback, tools=tools
-        # )
+        prepared_inputs = self._prepare_inputs(
+            messages=messages, generation_kwargs=generation_kwargs, streaming_callback=streaming_callback, tools=tools
+        )
 
-        # streaming_callback = select_streaming_callback(
-        #     self.streaming_callback, streaming_callback, requires_async=False
-        # )
-        # if streaming_callback:
-        #     # streamer parameter hooks into HF streaming, HFTokenStreamingHandler is an adapter to our streaming
-        #     prepared_inputs["generation_kwargs"]["streamer"] = HFTokenStreamingHandler(
-        #         tokenizer=prepared_inputs["tokenizer"],
-        #         stream_handler=streaming_callback,
-        #         stop_words=prepared_inputs["stop_words"],
-        #         component_info=ComponentInfo.from_component(self),
-        #     )
+        streaming_callback = select_streaming_callback(
+            self.streaming_callback, streaming_callback, requires_async=False
+        )
+        if streaming_callback:
+            # streamer parameter hooks into HF streaming, HFTokenStreamingHandler is an adapter to our streaming
+            prepared_inputs["generation_kwargs"]["streamer"] = HFTokenStreamingHandler(
+                tokenizer=prepared_inputs["tokenizer"],
+                stream_handler=streaming_callback,
+                stop_words=prepared_inputs["stop_words"],
+                component_info=ComponentInfo.from_component(self),
+            )
 
         # We know it's not None because we check it in _prepare_inputs
         assert self.pipeline is not None
@@ -449,7 +454,7 @@ class HuggingFaceLocalChatGenerator:
         self,
         messages: List[ChatMessage],
         generation_kwargs: Optional[Dict[str, Any]] = None,
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
         tools: Optional[Union[List[Tool], Toolset]] = None,
     ) -> Dict[str, List[ChatMessage]]:
         """
@@ -470,36 +475,36 @@ class HuggingFaceLocalChatGenerator:
             messages=messages, generation_kwargs=generation_kwargs, tools=tools
         )
 
-        # # Validate and select the streaming callback
-        # streaming_callback = select_streaming_callback(self.streaming_callback, streaming_callback, requires_async=True)
+        # Validate and select the streaming callback
+        streaming_callback = select_streaming_callback(self.streaming_callback, streaming_callback, requires_async=True)
 
-        # if streaming_callback:
-        #     async_handler = AsyncHFTokenStreamingHandler(
-        #         tokenizer=prepared_inputs["tokenizer"],
-        #         # Cast to AsyncStreamingCallbackT since we know streaming_callback is async
-        #         stream_handler=cast(AsyncStreamingCallbackT, streaming_callback),
-        #         stop_words=prepared_inputs["stop_words"],
-        #         component_info=ComponentInfo.from_component(self),
-        #     )
-        #     prepared_inputs["generation_kwargs"]["streamer"] = async_handler
+        if streaming_callback:
+            async_handler = AsyncHFTokenStreamingHandler(
+                tokenizer=prepared_inputs["tokenizer"],
+                # Cast to AsyncStreamingCallbackT since we know streaming_callback is async
+                stream_handler=cast(AsyncStreamingCallbackT, streaming_callback),
+                stop_words=prepared_inputs["stop_words"],
+                component_info=ComponentInfo.from_component(self),
+            )
+            prepared_inputs["generation_kwargs"]["streamer"] = async_handler
 
-        #     # Use async context manager for proper resource cleanup
-        #     async with self._manage_queue_processor(async_handler):
-        #         output = await asyncio.get_running_loop().run_in_executor(
-        #             self.executor,
-        #             # have to ignore since assert self.pipeline is not None doesn't work
-        #             lambda: self.pipeline(  # type: ignore[misc]
-        #                 prepared_inputs["prepared_prompt"], **prepared_inputs["generation_kwargs"]
-        #             ),
-        #         )
-        # else:
-        #     output = await asyncio.get_running_loop().run_in_executor(
-        #         self.executor,
-        #         # have to ignore since assert self.pipeline is not None doesn't work
-        #         lambda: self.pipeline(  # type: ignore[misc]
-        #             prepared_inputs["prepared_prompt"], **prepared_inputs["generation_kwargs"]
-        #         ),
-        #     )
+            # Use async context manager for proper resource cleanup
+            async with self._manage_queue_processor(async_handler):
+                output = await asyncio.get_running_loop().run_in_executor(
+                    self.executor,
+                    # have to ignore since assert self.pipeline is not None doesn't work
+                    lambda: self.pipeline(  # type: ignore[misc]
+                        prepared_inputs["prepared_prompt"], **prepared_inputs["generation_kwargs"]
+                    ),
+                )
+        else:
+            output = await asyncio.get_running_loop().run_in_executor(
+                self.executor,
+                # have to ignore since assert self.pipeline is not None doesn't work
+                lambda: self.pipeline(  # type: ignore[misc]
+                    prepared_inputs["prepared_prompt"], **prepared_inputs["generation_kwargs"]
+                ),
+            )
         output = await asyncio.get_running_loop().run_in_executor(
             self.executor,
             # have to ignore since assert self.pipeline is not None doesn't work
@@ -530,7 +535,7 @@ class HuggingFaceLocalChatGenerator:
         self,
         messages: List[ChatMessage],
         generation_kwargs: Optional[Dict[str, Any]] = None,
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
         tools: Optional[Union[List[Tool], Toolset]] = None,
     ) -> Dict[str, Any]:
         """
@@ -548,9 +553,9 @@ class HuggingFaceLocalChatGenerator:
             raise RuntimeError("The generation model has not been loaded. Please call warm_up() before running.")
 
         tools = tools or self.tools
-        # if tools and streaming_callback is not None:
-        #     raise ValueError("Using tools and streaming at the same time is not supported. Please choose one.")
-        # _check_duplicate_tool_names(list(tools or []))
+        if tools and streaming_callback is not None:
+            raise ValueError("Using tools and streaming at the same time is not supported. Please choose one.")
+        _check_duplicate_tool_names(list(tools or []))
 
         if isinstance(tools, Toolset):
             tools = list(tools)
@@ -562,17 +567,17 @@ class HuggingFaceLocalChatGenerator:
         # Check and update generation parameters
         generation_kwargs = {**self.generation_kwargs, **(generation_kwargs or {})}
 
-        # # If streaming_callback is provided, ensure that num_return_sequences is set to 1
-        # if streaming_callback:
-        #     num_responses = generation_kwargs.get("num_return_sequences", 1)
-        #     if num_responses > 1:
-        #         msg = (
-        #             "Streaming is enabled, but the number of responses is set to {num_responses}. "
-        #             "Streaming is only supported for single response generation. "
-        #             "Setting the number of responses to 1."
-        #         )
-        #         logger.warning(msg, num_responses=num_responses)
-        #         generation_kwargs["num_return_sequences"] = 1
+        # If streaming_callback is provided, ensure that num_return_sequences is set to 1
+        if streaming_callback:
+            num_responses = generation_kwargs.get("num_return_sequences", 1)
+            if num_responses > 1:
+                msg = (
+                    "Streaming is enabled, but the number of responses is set to {num_responses}. "
+                    "Streaming is only supported for single response generation. "
+                    "Setting the number of responses to 1."
+                )
+                logger.warning(msg, num_responses=num_responses)
+                generation_kwargs["num_return_sequences"] = 1
 
         stop_words = generation_kwargs.pop("stop_words", []) + generation_kwargs.pop("stop_sequences", [])
         stop_words = self._validate_stop_words(stop_words)

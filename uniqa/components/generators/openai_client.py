@@ -13,20 +13,20 @@ from openai.types.chat.chat_completion import Choice
 from openai.types.chat import ChatCompletion, ChatCompletionChunk, ChatCompletionMessage
 
 from uniqa import default_from_dict, default_to_dict, logging
-# from uniqa.components.generators.chat.openai import (
-#     _check_finish_reason,
-#     _convert_chat_completion_chunk_to_streaming_chunk,
-#     _convert_chat_completion_to_chat_message,
-# )
-# from uniqa.components.generators.utils import _convert_streaming_chunks_to_chat_message
-from uniqa.dataclasses import (
-    ChatMessage,
-    # ComponentInfo,
-    # StreamingCallbackT,
-    # StreamingChunk,
-    # select_streaming_callback,
+from haystack.components.generators.chat.openai import (
+    _check_finish_reason,
+    _convert_chat_completion_chunk_to_streaming_chunk,
+    _convert_chat_completion_to_chat_message,
 )
-# from uniqa.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
+from haystack.components.generators.utils import _convert_streaming_chunks_to_chat_message
+from haystack.dataclasses import (
+    ChatMessage,
+    ComponentInfo,
+    StreamingCallbackT,
+    StreamingChunk,
+    select_streaming_callback,
+)
+from haystack.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
 # from uniqa.utils.http_client import init_http_client
 
 logger = logging.logDog
@@ -69,7 +69,7 @@ class OpenAIGenerator:
         self,
         api_key: str = os.environ.get('OPENAI_API_KEY'),
         model: str = "gpt-4o-mini",
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
         api_base_url: Optional[str] = None,
         organization: Optional[str] = None,
         system_prompt: Optional[str] = None,
@@ -125,7 +125,7 @@ class OpenAIGenerator:
         self.model = model
         self.generation_kwargs = generation_kwargs or {}
         self.system_prompt = system_prompt
-        # self.streaming_callback = streaming_callback
+        self.streaming_callback = streaming_callback
 
         self.api_base_url = api_base_url
         self.organization = organization
@@ -159,11 +159,11 @@ class OpenAIGenerator:
         :returns:
             The serialized component as a dictionary.
         """
-        # callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
+        callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
         return default_to_dict(
             self,
             model=self.model,
-            # streaming_callback=callback_name,
+            streaming_callback=callback_name,
             api_base_url=self.api_base_url,
             organization=self.organization,
             generation_kwargs=self.generation_kwargs,
@@ -173,29 +173,29 @@ class OpenAIGenerator:
             http_client_kwargs=self.http_client_kwargs,
         )
 
-    # @classmethod
-    # def from_dict(cls, data: Dict[str, Any]) -> "OpenAIGenerator":
-    #     """
-    #     Deserialize this component from a dictionary.
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "OpenAIGenerator":
+        """
+        Deserialize this component from a dictionary.
 
-    #     :param data:
-    #         The dictionary representation of this component.
-    #     :returns:
-    #         The deserialized component instance.
-    #     """
-    #     deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
-    #     init_params = data.get("init_parameters", {})
-    #     # serialized_callback_handler = init_params.get("streaming_callback")
-    #     # if serialized_callback_handler:
-    #     #     data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
-    #     return default_from_dict(cls, data)
+        :param data:
+            The dictionary representation of this component.
+        :returns:
+            The deserialized component instance.
+        """
+        deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
+        init_params = data.get("init_parameters", {})
+        serialized_callback_handler = init_params.get("streaming_callback")
+        if serialized_callback_handler:
+            data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
+        return default_from_dict(cls, data)
 
     # @component.output_types(replies=List[str], meta=List[Dict[str, Any]])
     def run(
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
         generation_kwargs: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -227,10 +227,10 @@ class OpenAIGenerator:
         # update generation kwargs by merging with the generation kwargs passed to the run method
         generation_kwargs = {**self.generation_kwargs, **(generation_kwargs or {})}
 
-        # # check if streaming_callback is passed
-        # streaming_callback = select_streaming_callback(
-        #     init_callback=self.streaming_callback, runtime_callback=streaming_callback, requires_async=False
-        # )
+        # check if streaming_callback is passed
+        streaming_callback = select_streaming_callback(
+            init_callback=self.streaming_callback, runtime_callback=streaming_callback, requires_async=False
+        )
 
         # adapt ChatMessage(s) to the format expected by the OpenAI API
         openai_formatted_messages = [message.to_openai_dict_format() for message in messages]
@@ -238,37 +238,37 @@ class OpenAIGenerator:
         completion: Union[Stream[ChatCompletionChunk], ChatCompletion] = self.client.chat.completions.create(
             model=self.model,
             messages=openai_formatted_messages,  # type: ignore
-            # stream=streaming_callback is not None,
+            stream=streaming_callback is not None,
             **generation_kwargs,
         )
 
         completions: List[ChatMessage] = []
-        # if streaming_callback is not None:
-        #     num_responses = generation_kwargs.pop("n", 1)
-        #     if num_responses > 1:
-        #         raise ValueError("Cannot stream multiple responses, please set n=1.")
+        if streaming_callback is not None:
+            num_responses = generation_kwargs.pop("n", 1)
+            if num_responses > 1:
+                raise ValueError("Cannot stream multiple responses, please set n=1.")
 
-        #     component_info = ComponentInfo.from_component(self)
-        #     chunks: List[StreamingChunk] = []
-        #     for chunk in completion:
-        #         chunk_delta: StreamingChunk = _convert_chat_completion_chunk_to_streaming_chunk(
-        #             chunk=chunk,  # type: ignore
-        #             previous_chunks=chunks,
-        #             component_info=component_info,
-        #         )
-        #         chunks.append(chunk_delta)
-        #         streaming_callback(chunk_delta)
+            component_info = ComponentInfo.from_component(self)
+            chunks: List[StreamingChunk] = []
+            for chunk in completion:
+                chunk_delta: StreamingChunk = _convert_chat_completion_chunk_to_streaming_chunk(
+                    chunk=chunk,  # type: ignore
+                    previous_chunks=chunks,
+                    component_info=component_info,
+                )
+                chunks.append(chunk_delta)
+                streaming_callback(chunk_delta)
 
-        #     completions = [_convert_streaming_chunks_to_chat_message(chunks=chunks)]
+            completions = [_convert_streaming_chunks_to_chat_message(chunks=chunks)]
         if isinstance(completion, ChatCompletion):
             completions = [
                 _convert_chat_completion_to_chat_message(completion=completion, choice=choice)
                 for choice in completion.choices
             ]
 
-        # # before returning, do post-processing of the completions
-        # for response in completions:
-        #     _check_finish_reason(response.meta)
+        # before returning, do post-processing of the completions
+        for response in completions:
+            _check_finish_reason(response.meta)
 
         return {"replies": [message.text for message in completions], "meta": [message.meta for message in completions]}
 

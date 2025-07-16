@@ -4,9 +4,10 @@
 
 from typing import Any, Dict, List, Literal, Optional, cast
 
-from uniqa import default_from_dict, default_to_dict, logging
-# from uniqa.dataclasses import ComponentInfo, StreamingCallbackT, select_streaming_callback
 from uniqa.lazy_imports import LazyImport
+from uniqa import default_from_dict, default_to_dict, logging
+from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
+
 from uniqa.utils import (
     ComponentDevice,
     # Secret,
@@ -14,7 +15,9 @@ from uniqa.utils import (
     # deserialize_secrets_inplace,
     # serialize_callable,
 )
-from uniqa.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
+
+from haystack.dataclasses import ComponentInfo, StreamingCallbackT, AsyncStreamingCallbackT
+from haystack.dataclasses import select_streaming_callback
 
 logger = logging.logDog
 
@@ -29,6 +32,7 @@ with LazyImport(message="Run 'pip install \"transformers[torch]\"'") as transfor
         StopWordsCriteria,
         resolve_hf_pipeline_kwargs,
     )
+    from haystack.utils.hf import HFTokenStreamingHandler
 
 
 # @component
@@ -64,7 +68,7 @@ class HuggingFaceLocalGenerator:
         generation_kwargs: Optional[Dict[str, Any]] = None,
         huggingface_pipeline_kwargs: Optional[Dict[str, Any]] = None,
         stop_words: Optional[List[str]] = None,
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
     ):
         """
         Creates an instance of a HuggingFaceLocalGenerator.
@@ -129,7 +133,7 @@ class HuggingFaceLocalGenerator:
         self.stop_words = stop_words
         self.pipeline: Optional[HfPipeline] = None
         self.stopping_criteria_list: Optional[StoppingCriteriaList] = None
-        # self.streaming_callback = streaming_callback
+        self.streaming_callback = streaming_callback
 
     def _get_telemetry_data(self) -> Dict[str, Any]:
         """
@@ -167,54 +171,54 @@ class HuggingFaceLocalGenerator:
             )
             self.stopping_criteria_list = StoppingCriteriaList([stop_words_criteria])
 
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Serializes the component to a dictionary.
+    # def to_dict(self) -> Dict[str, Any]:
+    #     """
+    #     Serializes the component to a dictionary.
 
-        :returns:
-            Dictionary with serialized data.
-        """
-        # callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
-        serialization_dict = default_to_dict(
-            self,
-            huggingface_pipeline_kwargs=self.huggingface_pipeline_kwargs,
-            generation_kwargs=self.generation_kwargs,
-            # streaming_callback=callback_name,
-            stop_words=self.stop_words,
-            token=self.token.to_dict() if self.token else None,
-        )
+    #     :returns:
+    #         Dictionary with serialized data.
+    #     """
+    #     callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
+    #     serialization_dict = default_to_dict(
+    #         self,
+    #         huggingface_pipeline_kwargs=self.huggingface_pipeline_kwargs,
+    #         generation_kwargs=self.generation_kwargs,
+    #         streaming_callback=callback_name,
+    #         stop_words=self.stop_words,
+    #         token=self.token.to_dict() if self.token else None,
+    #     )
 
-        huggingface_pipeline_kwargs = serialization_dict["init_parameters"]["huggingface_pipeline_kwargs"]
-        huggingface_pipeline_kwargs.pop("token", None)
+    #     huggingface_pipeline_kwargs = serialization_dict["init_parameters"]["huggingface_pipeline_kwargs"]
+    #     huggingface_pipeline_kwargs.pop("token", None)
 
-        serialize_hf_model_kwargs(huggingface_pipeline_kwargs)
-        return serialization_dict
+    #     serialize_hf_model_kwargs(huggingface_pipeline_kwargs)
+    #     return serialization_dict
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "HuggingFaceLocalGenerator":
-        """
-        Deserializes the component from a dictionary.
+    # @classmethod
+    # def from_dict(cls, data: Dict[str, Any]) -> "HuggingFaceLocalGenerator":
+    #     """
+    #     Deserializes the component from a dictionary.
 
-        :param data:
-            The dictionary to deserialize from.
-        :returns:
-            The deserialized component.
-        """
-        # deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
-        init_params = data.get("init_parameters", {})
-        serialized_callback_handler = init_params.get("streaming_callback")
-        # if serialized_callback_handler:
-        #     data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
+    #     :param data:
+    #         The dictionary to deserialize from.
+    #     :returns:
+    #         The deserialized component.
+    #     """
+    #     deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
+    #     init_params = data.get("init_parameters", {})
+    #     serialized_callback_handler = init_params.get("streaming_callback")
+    #     if serialized_callback_handler:
+    #         data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
 
-        huggingface_pipeline_kwargs = init_params.get("huggingface_pipeline_kwargs", {})
-        deserialize_hf_model_kwargs(huggingface_pipeline_kwargs)
-        return default_from_dict(cls, data)
+    #     huggingface_pipeline_kwargs = init_params.get("huggingface_pipeline_kwargs", {})
+    #     deserialize_hf_model_kwargs(huggingface_pipeline_kwargs)
+    #     return default_from_dict(cls, data)
 
     # @component.output_types(replies=List[str])
     def run(
         self,
         prompt: str,
-        # streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: Optional[StreamingCallbackT] = None,
         generation_kwargs: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -247,29 +251,29 @@ class HuggingFaceLocalGenerator:
         # merge generation kwargs from init method with those from run method
         updated_generation_kwargs = {**self.generation_kwargs, **(generation_kwargs or {})}
 
-        # # check if streaming_callback is passed
-        # streaming_callback = select_streaming_callback(
-        #     init_callback=self.streaming_callback, runtime_callback=streaming_callback, requires_async=False
-        # )
+        # check if streaming_callback is passed
+        streaming_callback = select_streaming_callback(
+            init_callback=self.streaming_callback, runtime_callback=streaming_callback, requires_async=False
+        )
 
-        # if streaming_callback:
-        #     num_responses = updated_generation_kwargs.get("num_return_sequences", 1)
-        #     if num_responses > 1:
-        #         msg = (
-        #             "Streaming is enabled, but the number of responses is set to {num_responses}. "
-        #             "Streaming is only supported for single response generation. "
-        #             "Setting the number of responses to 1."
-        #         )
-        #         logger.warning(msg, num_responses=num_responses)
-        #         updated_generation_kwargs["num_return_sequences"] = 1
+        if streaming_callback:
+            num_responses = updated_generation_kwargs.get("num_return_sequences", 1)
+            if num_responses > 1:
+                msg = (
+                    "Streaming is enabled, but the number of responses is set to {num_responses}. "
+                    "Streaming is only supported for single response generation. "
+                    "Setting the number of responses to 1."
+                )
+                logger.warning(msg, num_responses=num_responses)
+                updated_generation_kwargs["num_return_sequences"] = 1
 
-        #     # streamer parameter hooks into HF streaming, HFTokenStreamingHandler is an adapter to our streaming
-        #     updated_generation_kwargs["streamer"] = HFTokenStreamingHandler(
-        #         tokenizer=self.pipeline.tokenizer,
-        #         stream_handler=streaming_callback,
-        #         stop_words=self.stop_words,
-        #         component_info=ComponentInfo.from_component(self),
-        #     )
+            # streamer parameter hooks into HF streaming, HFTokenStreamingHandler is an adapter to our streaming
+            updated_generation_kwargs["streamer"] = HFTokenStreamingHandler(
+                tokenizer=self.pipeline.tokenizer,
+                stream_handler=streaming_callback,
+                stop_words=self.stop_words,
+                component_info=ComponentInfo.from_component(self),
+            )
 
         output = self.pipeline(prompt, stopping_criteria=self.stopping_criteria_list, **updated_generation_kwargs)
         replies = [o["generated_text"] for o in output if "generated_text" in o]
