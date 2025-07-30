@@ -13,22 +13,34 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.encoders import jsonable_encoder
 
 """
-可以将 log 的配置和使用更加简单和方便
+loguru 可以将log的配置和使用更加简单和方便
 https://blog.csdn.net/qq_51967017/article/details/134045236
 
-# # logger的完整配置
-# logger.add(
-#     sink=os.path.join(log_path, 'app.log'),
-#     rotation='500 MB',                  # 日志文件最大限制500mb
-#     retention='30 days',                # 最长保留30天
-#     # format="{time}|{level}|{message}",  # 日志显示格式
-#     compression="zip",                  # 压缩形式保存
-#     encoding='utf-8',                   # 编码
-#     level='INFO',                       # 日志级别
-#     enqueue=True,                       # 默认是线程安全的，enqueue=True使得多进程安全
-#     # backtrace=True,                   # 显示整个堆栈跟踪(包括变量值)来帮助您识别问题。应该在生产环境中将其设置为 False
-#     # diagnose=True,                    # 显示整个堆栈跟踪(包括变量值)来帮助您识别问题。应该在生产环境中将其设置为 False
-# )
+# 彩色格式
+from colorlog import ColoredFormatter
+formatter = ColoredFormatter(
+    "%(asctime)s - %(log_color)s%(levelname)-8s%(reset)s - %(blue)s%(message)s",
+    datefmt='%Y-%m-%d %H:%M:%S',
+    reset=True,
+    log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'green',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+    },
+    secondary_log_colors={},
+    style='%'
+)
+# --- 日志配置 ---
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = False  # 防止日志传播到根logger
+# 控制台输出配置
+sh = logging.StreamHandler(sys.stdout)  #往屏幕上输出
+sh.setFormatter(formatter) #设置屏幕上显示的格式
+# 添加 handler 到 logger
+logger.addHandler(sh)
 """
 
 
@@ -48,42 +60,37 @@ class Logger:
         self.logger.remove()
         
         # 日志输出格式
-        formatter = "{time:YYYY-MM-DD HH:mm:ss} | {level}: {message}"
+        fmt = ("<green>{time:YYYYMMDD HH:mm:ss}</green> | "  # 颜色>时间
+            "{process.name} | "  # 进程名
+            "{thread.name} | "  # 进程名
+            "<cyan>{module}</cyan>.<cyan>{function}</cyan>"  # 模块名.方法名
+            ":<cyan>{line}</cyan> | "  # 行号
+            "<level>{level}</level>: "  # 等级
+            "<level>{message}</level>"
+        )
         # 添加控制台输出的格式,sys.stdout为输出到屏幕;关于这些配置还需要自定义请移步官网查看相关参数说明
-        self.logger.add(sys.stdout,
-                        format="<green>{time:YYYYMMDD HH:mm:ss}</green> | "  # 颜色>时间
-                               "{process.name} | "  # 进程名
-                               "{thread.name} | "  # 进程名
-                               "<cyan>{module}</cyan>.<cyan>{function}</cyan>"  # 模块名.方法名
-                               ":<cyan>{line}</cyan> | "  # 行号
-                               "<level>{level}</level>: "  # 等级
-                               "<level>{message}</level>",  # 日志内容
-                        )
+        self.logger.add(sys.stdout, format=fmt)
 
         # 日志写入文件
+        fmt = "{time:YYYY/MM/DD at HH:mm:ss} | {level} | {file}:{line} | {message}"
         self.logger.add(log_file,  # 写入目录指定文件
-                        format='{time:YYYYMMDD HH:mm:ss} - '  # 时间
-                               "{process.name} | "  # 进程名
-                               "{thread.name} | "  # 进程名
-                               '{module}.{function}:{line} - {level} -{message}',  # 模块名.方法名:行号
+                        format=fmt, 
                         encoding='utf-8',
                         retention='7 days',  # 设置历史保留时长
                         backtrace=True,  # 回溯
                         diagnose=True,  # 诊断
                         enqueue=True,  # 异步写入
-                        rotation="00:00",  # 每日更新时间
-                        # rotation="5kb",  # 切割，设置文件大小，rotation="12:00"，rotation="1 week"
-                        # filter="my_module"  # 过滤模块
-                        # compression="zip"   # 文件压缩
+                        rotation="00:00",  # 每日更新时间 "12:00"，"1 week"
+                        # rotation="200 MB",  # 切割，设置文件大小
+                        # filter=lambda record: record["level"].name == "INFO",  # 过滤模块
+                        # compression="zip",   # 文件压缩
+                        # serialize=True,  # Loguru 会将全部日志消息转换为 JSON 格式保存
                         )
 
         # 日志写入文件
         self.logger.add(log_file_error,  # 写入目录指定文件
                         level="ERROR", 
-                        format='{time:YYYYMMDD HH:mm:ss} - '  # 时间
-                               "{process.name} | "  # 进程名
-                               "{thread.name} | "  # 进程名
-                               '{module}.{function}:{line} - {level} -{message}',  # 模块名.方法名:行号
+                        format=fmt, 
                         encoding='utf-8',
                         retention='7 days',  # 设置历史保留时长
                         backtrace=True,  # 回溯
@@ -92,7 +99,8 @@ class Logger:
                         rotation="00:00",  # 每日更新时间
                         # rotation="200 MB",  # 切割，设置文件大小, rotation="12:00"，rotation="1 week"
                         filter=lambda record: record["level"].name == "ERROR",   # 过滤模块
-                        # compression="zip"   # 文件压缩
+                        # compression="zip",   # 文件压缩
+                        # serialize=True,  # Loguru 会将全部日志消息转换为 JSON 格式保存
                         )
 
     def init_config(self):

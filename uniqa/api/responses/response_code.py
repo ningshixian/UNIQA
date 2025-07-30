@@ -42,6 +42,17 @@ def resp_500(*, data: Union[list, dict, str] = None, message: str = "Internal Se
     )
 
 
+def resp_400(*, data: Union[list, dict, str] = None, message: str = "Bad Request") -> Response:
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder({
+            'code': 400,
+            'message': message,
+            'data': data,
+        })
+    )
+
+
 # 请求参数格式错误
 def resp_4001(*, data: Union[list, dict, str] = None,
               message: Union[list, dict, str] = "Request Validation Error") -> Response:

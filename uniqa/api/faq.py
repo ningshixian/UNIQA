@@ -149,7 +149,7 @@ class FAQPipeline:
         )
         self.text_embedder = SentenceTransformersTextEmbedder(model="infgrad/stella-base-zh-v3-1792d")
 
-        # 初始化排序器
+        # 初始化排序器（可设置为全局变量）
         self.ranker = SentenceTransformersSimilarityRanker(
             model="cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
             scale_score=True,
