@@ -1,0 +1,114 @@
+prod:
+  path_root: "."    # os.getcwd()
+  fine_tuned_folder: "/xxx"
+  model_cache_folder: "/xxx"
+  
+  # Kafka 配置
+  kafka:
+    bootstrap_servers:
+      - 172.xx.xx.xxx:yyyy
+      - 172.xx.xx.xxx:yyyy
+      - 172.xx.xx.xxx:yyyy
+    topic_name: xxx     # 要订阅的topic
+    client_id: kafka-cc-qy-prod-v2.0.0            # 仅标识作用和日志记录
+    group_id: kafka-cc-qy-prod-group              # 指定group_id
+    auto_offset_reset: latest                     # 有group_id，只在第一次时生效
+
+test:
+  path_root: "../"
+  fine_tuned_folder: "{{ path_root }}/finetuned_models"
+  model_cache_folder: "xxx"
+  
+  # Kafka 配置
+  kafka:
+    bootstrap_servers:
+      - 172.xx.xx.xxx:yyyy
+      - 172.xx.xx.xxx:yyyy
+      - 172.xx.xx.xxx:yyyy
+    topic_name: xxx     # 要订阅的topic
+    client_id: kafka-cc-qy-test-v1.0.0
+    group_id: kafka-cc-qy-test-group
+    auto_offset_reset: latest
+    # group_id:                                     # 未指定group_id，不保存偏移量，广播消费，用于调试
+    # auto_offset_reset: earliest                   # 每次重启都从 latest/earliest 开始
+
+
+# Redis配置
+redis:
+  redis_sentinel_list:
+    - "xxx.cloud.com:yyyy"
+  sentinel_master: "master-name"
+  redis_password: "password"  # 敏感信息用环境变量
+  snapshot_key: knowledge:snapshot:{{ kafka.group_id }}:{{ kafka.bot_id_needed }}
+
+# 预训练模型配置
+pretrained_model_config:
+  stella: "{{ model_cache_folder }}/stella-large-zh-v3-1792d"
+  puff: "{{ model_cache_folder }}/puff-large-v1"
+  xiaobu: "{{ model_cache_folder }}/xiaobu-embedding-v2"
+npy_path: "{{ path_root }}/evals/data.npy"
+
+# 微调模型配置
+fine_tuned_model_config:
+  xiaobu:
+    - "{{ fine_tuned_folder }}/xiaobu-fine-tuned"
+    - "{{ path_root }}/evals/data.xiaobu.npy"
+  puff:
+    - "{{ fine_tuned_folder }}/puff-fine-tuned"
+    - "{{ path_root }}/evals/data.puff.npy"
+  stella:
+    - "{{ fine_tuned_folder }}/stella-fine-tuned-v4.5"
+    - "{{ path_root }}/evals/data.stella.npy"
+
+ # 重排序配置
+rerank_cross_model: 
+  - "/bge-reranker-large"
+  - "/bge-reranker-v2-m3"
+  - "/bce-reranker-base_v1"
+rerank_model_path: "{{ model_cache_folder }}{{ rerank_cross_model.0 }}"
+use_cuda: true
+use_rank: true
+
+
+# 文件路径配置
+paths:
+  qa:
+    greeting: "{{ path_root }}/data/greeting.json"
+    robot: "{{ path_root }}/data/demo.json"
+    common: "{{ path_root }}/data/demo.json"
+    increment: "{{ path_root }}/data/demo_update.json"
+  kafka:
+    intent: "{{ path_root }}/data/kafka/intent.json"             # Use only once
+    param: "{{ path_root }}/data/kafka/param.json"               # Use only once
+    entity: "{{ path_root }}/data/kafka/entity.json"             # Use only once
+    slot: "{{ path_root }}/data/kafka/slot.json"                       # load_snapshot()启动时重建数据
+    onetouch: "{{ path_root }}/kafka/faq/qa_qy_onetouch.json"         # load_snapshot()启动时重建数据
+  entities:
+    sys: "{{ path_root }}/data/entities/entity_sys.json"    # Use only once
+    algo: "{{ path_root }}/data/entities/entity_algo.json"  # Use only once
+    car: "{{ path_root }}/data/entities/slot_car.json"
+
+# 评测配置
+eval:
+  testset_folder: "{{ path_root }}/evals/testset_new"
+  test_set_path: "{{ path_root }}/evals/testset_new/testset_update.csv"
+  eval_path: "{{ path_root }}/evals/testset_new/evaluate_{}_ts_{}.csv"
+  eval_path_filter: "{{ path_root }}/evals/testset_new/evaluate_{}_ts_{}_filter.csv"
+
+# embedding训练数据
+train:
+  train_similar_qq_path: "{{ path_root }}/data/xx.csv"
+
+
+threshold_priority:
+  # 置信度阈值
+  high_threshold: 0.88        # 高阈值
+  low_threshold: 0.44         # 低阈值
+  recommend_threshold: 0.74   # 用于知识推荐的
+  # 知识来源优先级
+  high_priority:  # 核心业务来源（优先匹配，确保关键知识准确响应）
+    - 1  # FAQ知识库
+    - 2  # 一触即达意图
+  low_priority:   # 辅助寒暄来源
+    - 4  # 自定义寒暄
+    - 5  # 内置寒暄库

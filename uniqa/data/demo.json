@@ -2,6 +2,7 @@
     {
         "answerContentList": [
             {
+                "answer_id": "KA096202507161833222671407",
                 "answerContent": "要更新车辆软件，请确保车辆已连接到稳定的WiFi网络。然后在中控屏幕上进入设置 > 系统 > 软件更新，点击检查更新。如果有可用更新，按照提示完成下载和安装。整个过程大约需要30分钟，期间请勿关闭车辆电源。",
                 "answerTypeList": ["common", "central"],
                 "carLabelList": [
@@ -20,7 +21,8 @@
                 "thirdSmsId": "TS001",
                 "validEndTime": "2035-05-15 16:09:40",
                 "validStartTime": "2025-05-15 16:09:40",
-                "status": 1
+                "status": 1,
+                "is_default_answer": 1
             }
         ],
         "createUser": "10001",

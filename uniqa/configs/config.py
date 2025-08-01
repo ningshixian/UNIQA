@@ -1,120 +1,178 @@
-import os 
-env = os.getenv("FAQ_ENV", "")
-
-if env=='prod': #生产环境
-    path_root = os.getcwd()
-    # fine_tuned_folder = "/lpai/inputs/models/faq-for-dialogue-24-06-17-1"
-    fine_tuned_folder = "/lpai/inputs/models/faq-for-dialogue-24-09-18-1"
-    kafka_data_folder = os.path.join(path_root, "data_factory/kafka_prod")
-    model_cache_folder = "/lpai/inputs/models/faq-for-dialogue-24-06-17-2"
-else: #测试环境
-    # path_root = os.getcwd()
-    path_root = "/chj/nsx/faq-semantic-retrieval"
-    fine_tuned_folder = os.path.join(path_root, "finetuned_models")
-    kafka_data_folder = os.path.join(path_root, "data_factory/kafka_test")
-    model_cache_folder = "/chj/nsx/models"
+import os
+import json
+import yaml
+from typing import Dict, Any, Optional
+from copy import deepcopy
+from pathlib import Path
+from types import SimpleNamespace
+from jinja2 import Template
 
 
-# 预训练模型 / 预训练embedding
-pretrained_model_config = {
-    'distilbert': model_cache_folder+'/distilbert-multilingual-nli-stsb-quora-ranking',    # ✔
-    'paraphrase-multilingual-MiniLM-L12-v2': 'paraphrase-multilingual-MiniLM-L12-v2',
+class ConfigParser:
+    """配置文件解析器"""
 
-    'sbert-base': model_cache_folder+'/sbert-base-chinese-nli',    # ✔
-    'sbert-chinese-general-v2': 'DMetaSoul/sbert-chinese-general-v2',    # ✔
-    'm3e-large': model_cache_folder + '/m3e-large',
-    'bge-large': '/chj/nsx/embeddings/bge-large-zh-v1.5',
-    "gte-large": model_cache_folder + '/gte-large-zh',
-    "stella-large": model_cache_folder+"/stella-large-zh-v3-1792d",
-    "puff-large": model_cache_folder+"/puff-large-v1",
-    "xiaobu": model_cache_folder+"/xiaobu-embedding-v2",
+    def __init__(self, env=None):
+        # 根据环境变量选择配置文件
+        self.env = env or os.getenv('FAQ_ENV', 'test')
+        self.raw_config = self._load_config()
+        self.parsed_config = self._parse_config()
     
-    'roberta': model_cache_folder+ '/chinese-roberta-wwm-ext',
-    'simcse-roberta': model_cache_folder+ '/simcse-chinese-roberta-wwm-ext',
-    'erlangshen': model_cache_folder+ '/Erlangshen-SimCSE-110M-Chinese',
-    'text2vec': model_cache_folder + '/text2vec-base-chinese-paraphrase',    # ✔
-    'simbert': model_cache_folder+"/simbert-base-chinese", 
-}
+    def _load_config(self):
+        config_path = Path(__file__).parent / 'config.yaml'
+        with open(config_path, 'r', encoding='utf-8') as f:
+            raw_config = yaml.safe_load(f)
+        return raw_config
+    
+    def _parse_config(self):
+        """
+        解析配置，处理环境变量和模板变量
+        
+        Returns:
+            SimpleNamespace: 解析后的配置对象
+        """
+        # 获取环境相关配置
+        env_config = self.raw_config.get(self.env, self.raw_config['test'])
+        common_config = {k: v for k, v in self.raw_config.items() if k not in ['prod', 'test']}
+        # self.kafka_config = env_config['kafka']
+        # self.redis_config = self.raw_config['redis']
+        
+        # 合并配置
+        merged_config = {**env_config, **common_config}
 
-npy_path = os.path.join(path_root,  "/evals/data.npy")
+        # 特殊处理kafka配置（因为它在环境配置中）
+        if 'kafka' in env_config:
+            merged_config['kafka'] = env_config['kafka']
+        
+        # 处理模板变量
+        parsed_config = self._render_templates(merged_config)
+        
+        # 转换为SimpleNamespace对象以便访问
+        return self._dict_to_namespace(parsed_config)
+    
 
-# 微调之后的模型
-fine_tuned_model_config = {
-    "xiaobu": [
-        fine_tuned_folder + "/xiaobu-fine-tuned", 
-        os.path.join(path_root,  "evals/data.xiaobu.npy")
-    ], 
-    "puff-large": [
-        fine_tuned_folder + "/puff-fine-tuned", 
-        os.path.join(path_root,  "evals/data.puff.npy")
-    ], 
-    "stella-large": [
-        # fine_tuned_folder + "/stella-fine-tuned-v3",    # v3 v4 v4.1
-        fine_tuned_folder + "/stella-fine-tuned-v4.5", 
-        os.path.join(path_root,  "evals/data.stella.npy")
-    ], 
-    "sbert-base": [
-        fine_tuned_folder + "/sbert-fine-tuned",
-        os.path.join(path_root,  "evals/data.sbert.npy")
-    ], 
-    "text2vec": [
-        fine_tuned_folder + "/cosent-fine-tuned", 
-        os.path.join(path_root,  "evals/data.cosent.npy")
-    ], 
-    "simbert": [
-        fine_tuned_folder + "/simbert-fine-tuned", 
-        os.path.join(path_root,  "evals/data.simbert.npy")
-    ],
-    'm3e-large': [
-        fine_tuned_folder + "/m3e-fine-tuned", 
-        os.path.join(path_root,  "evals/data.m3e.npy")
-    ],
-    'bge-large': [
-        fine_tuned_folder + "/bge-fine-tuned", 
-        os.path.join(path_root,  "evals/data.bge.npy")
-    ]
-}
+    # @property
+    # def snapshot_key(self):
+    #     return self.env_config['paths']['snapshot_key']
 
-# # dialogue编码模型
-# dialog_model_path = "/chj/nsx/models/stella-dialogue-large-zh-v3-1792d"
+    def _render_templates(self, config):
+        """递归渲染配置中的模板变量"""
+        # 将配置转换为JSON字符串
+        config_str = json.dumps(config)
+        
+        # 使用Jinja2渲染模板
+        template = Template(config_str)
+        
+        # 多次渲染以处理嵌套的模板变量
+        max_iterations = 10
+        for _ in range(max_iterations):
+            prev_str = config_str
+            config_str = template.render(**config)
+            template = Template(config_str)
+            # config = json.loads(config_str)
+            
+            # 如果没有变化，说明所有模板都已渲染
+            if prev_str == config_str:
+                break
+        
+        # 将JSON字符串转换回字典
+        return json.loads(config_str)
+    
+    def _dict_to_namespace(self, d):
+        """
+        将字典转换为SimpleNamespace对象
+        
+        Args:
+            d (dict): 字典
+            
+        Returns:
+            SimpleNamespace: 对象
+        """
+        if isinstance(d, dict):
+            # 递归处理嵌套字典
+            return SimpleNamespace(**{k: self._dict_to_namespace(v) for k, v in d.items()})
+        elif isinstance(d, list):
+            # 处理列表中的字典元素
+            return [self._dict_to_namespace(item) if isinstance(item, dict) else item for item in d]
+        else:
+            return d
+    
+    @property
+    def config(self) -> Dict[str, Any]:
+        """获取完整配置"""
+        return self.parsed_config
+    
+    def __repr__(self) -> str:
+        return f"ConfigParser(env='{self.env}', config_path='{self.config_path}')"
 
-# 粗排Prerank
 
-# 精排rerank
-rerank_cross_model = ["/bge-reranker-large", "/bge-reranker-v2-m3", "/bce-reranker-base_v1"]        # 分数倾向于两极分化
-rerank_bi_model = ["/stella-mrl-large-zh-v3.5-1792d", "/Yinka", "/zpoint_large_embedding_zh"]       # 分数倾向于中间
-rerank_model_path = model_cache_folder + rerank_cross_model[0]
-use_cuda = True                             # 是否使用GPU
-use_rank = True      
+def main():
+    # 单例模式
+    parsed_config = ConfigParser().parsed_config
 
-# IM对话数据
-dialog_im_path = os.path.join(path_root, "data_factory/dialog_df_智能驾舱_20240101-20240226_4.csv")
-dialog_im_processed_path = os.path.join(path_root, "data_factory/dialog_df_智能驾舱_processed.csv")
+    # 通过属性访问
+    print("Path root:", parsed_config.path_root)
+    print("Model ft folder:", parsed_config.fine_tuned_folder)
+        
+    # 访问嵌套配置
+    kafka_config = parsed_config.kafka.__dict__    # namespace 转换成 dict 
+    print("\nKafka配置:")
+    print(f"  Bootstrap servers: {kafka_config['bootstrap_servers']}")
+    print(f"  Topic: {kafka_config['topic_name']}")
+    print(f"  Group ID: {kafka_config['group_id']}")
+    print(f"  Data folder: {kafka_config['kafka_data_folder']}")
 
-# 评测集 / 评测结果
-testset_folder = os.path.join(path_root, 'evals/testset_new')
-test_set_path = testset_folder + "/testset_update.csv"
-# test_set_path = testset_folder + "/testset.xlsx"
-eval_path = testset_folder + "/evaluate_{}_ts_{}.csv"
-eval_path_filter = testset_folder + "/evaluate_{}_ts_{}_filter.csv"
+    redis_config = parsed_config.redis.__dict__    # namespace 转换成 dict 
+    print("\nRedis配置:")
+    print(f"  Sentinel list: {redis_config['redis_sentinel_list']}")
+    print(f"  Master: {redis_config['sentinel_master']}")
 
-# 训练数据
-# train_similar_qq_path = os.path.join(path_root, "data_factory/processed_faq相似问_haixiao.csv")
-# train_similar_qq_path = os.path.join(path_root, "data_factory/processed_crm_similar_pair_haixiao_0612.csv")
-train_similar_qq_path = os.path.join(path_root, "data_factory/processed_crm_similar_pair.csv")
+    # 模型配置
+    ft_models = parsed_config.fine_tuned_model_config.__dict__
+    print("\n微调后模型路径:")
+    for model_name, model_path in ft_models.items():
+        if model_name != 'npy_path':
+            print(f"  {model_name}: {model_path}")
 
-# 知识库
-qa_pair_path = os.path.join(path_root, "data_factory/processed_crm_knowledge_pair.csv")
-qa4api_path = os.path.join(path_root, "data_factory/qa4api.csv")
-qa4rec_path = os.path.join(path_root, "data_factory/qa4rec.csv")
+    print("\n排序模型路径:")
+    print("  Rerank model path:", parsed_config.rerank_model_path)
 
-# 七鱼相关库
-qa_qy_onetouch = kafka_data_folder + "/qa_qy_onetouch.csv"
-qa_qy_slot_path = kafka_data_folder + "/slot.json"
-qa_custom_greeting = os.path.join(path_root, "data_factory/qa_custom_greeting.csv")
-qa_global_greeting = os.path.join(path_root, "data_factory/qa_global_greeting.csv")
-qa_qy_slot_car_path = os.path.join(path_root, 'data_factory/entities/slot_car.json')
-# kafka持久化存储
-intent_path = kafka_data_folder + "/intent.json"
-param_path = kafka_data_folder + "/param.json"
-entity_path = kafka_data_folder + "/entity.json"
+    # 访问文件路径配置
+    print("\nQA文件路径:")
+    print("  paths.qa:", parsed_config.paths.qa.__dict__)
+    print("  paths.kafka:", parsed_config.paths.kafka.__dict__)
+    print("  paths.entities:", parsed_config.paths.entities.__dict__)
+
+    print("\n训练/测试数据:")
+    print("train_similar_qq_path:", parsed_config.train.train_similar_qq_path)
+    print("test_set_path:", parsed_config.eval.test_set_path)
+
+
+# main()
+# exit()
+
+cp = ConfigParser() # $FAQ_ENV
+parsed_config = cp.config
+
+# 获取模型配置
+pretrained_model_config = parsed_config.pretrained_model_config.__dict__
+fine_tuned_model_config = parsed_config.fine_tuned_model_config.__dict__
+rerank_model_path = parsed_config.rerank_model_path
+
+# 获取定义的所有路径
+paths = parsed_config.paths
+
+# kafka配置
+kafka_config = parsed_config.kafka
+
+# redis配置
+redis_config = parsed_config.redis
+snapshot_key = parsed_config.redis.snapshot_key
+
+# # 其他数据
+# train_config = parsed_config.train.__dict__
+# train_similar_qq_path = train_config["train_similar_qq_path"]
+# eval_config = parsed_config.eval.__dict__
+
+# 置信度阈值 & 知识优先级
+threshold_priority_config = parsed_config.threshold_priority
+# print(threshold_priority_config.__dict__)
